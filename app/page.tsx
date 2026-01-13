@@ -412,7 +412,7 @@ export default function Portfolio() {
 
                 <Button
                   href={profile.contact.github}
-                  variant="outline"
+                  variant="primary"
                   tone={dark ? "dark" : "light"}
                   className="min-w-[140px]"
                 >
@@ -698,6 +698,7 @@ export default function Portfolio() {
                       </Button>
                     )}
                   </div>
+                  
                 </Card>
               </motion.div>
             ))}
