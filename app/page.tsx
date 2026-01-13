@@ -478,8 +478,6 @@ export default function Portfolio() {
               </div>
             </div>
 
-               //Download CV dropdown menu -----------------------  
-
             {/* Download CV (dropdown) */}
             <div className="relative" ref={cvRef}>
               <Button
@@ -542,9 +540,6 @@ export default function Portfolio() {
                 </a>
               </motion.div>
             </div>
-
-               //Download CV dropdown menu end -----------------------  
-
 
           </motion.div>
         </section>
