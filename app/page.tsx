@@ -473,30 +473,14 @@ export default function Portfolio() {
             >
               <Button
                 href="/Baxtiyar_Alizada_CV_Ing.pdf"
-                variant="outline"
-                tone="dark"
-                className="
-  min-w-[170px]
-  bg-emerald-900/40
-  text-emerald-300
-  border border-emerald-500/30
-  hover:bg-emerald-900/60
-"
-
+                variant="primary"
+                tone={dark ? "dark" : "light"}
+                className="min-w-[170px] bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg"
               >
                 Download CV
               </Button>
             </motion.div>
 
-
-
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-              {profile.focus.map((f) => (
-                <Pill tone={dark ? "dark" : "light"} key={f}>
-                  {f}
-                </Pill>
-              ))}
-            </div>
           </motion.div>
         </section>
 
@@ -513,6 +497,14 @@ export default function Portfolio() {
           <div className="grid lg:grid-cols-3 gap-6">
             <Card className="p-6 lg:col-span-2">
               <p className={"text-sm leading-relaxed " + muted}>{profile.about}</p>
+
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+                {profile.focus.map((f) => (
+                  <Pill tone={dark ? "dark" : "light"} key={f}>
+                    {f}
+                  </Pill>
+                ))}
+              </div>
 
               <div className="mt-6 grid sm:grid-cols-2 gap-4">
                 {["Clean Code", "Modern UI/UX", "User-Centered", "Performance"].map(
