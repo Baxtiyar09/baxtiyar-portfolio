@@ -489,12 +489,23 @@ export default function Portfolio() {
                 Download CV
                 <motion.span
                   aria-hidden
-                  animate={{ rotate: cvOpen ? 180 : 0 }}
-                  transition={{ duration: 0.18 }}
+                  animate={{
+                    rotate: cvOpen ? 180 : 0,
+                    y: cvOpen ? 0 : [0, 4, 0],
+                  }}
+                  transition={{
+                    rotate: { duration: 0.18 },
+                    y: {
+                      duration: 1.2,
+                      repeat: cvOpen ? 0 : Infinity,
+                      ease: [0.4, 0, 0.2, 1],
+                    },
+                  }}
                   className="inline-flex"
                 >
                   <ChevronDown size={16} />
                 </motion.span>
+
               </Button>
               <motion.div
                 initial={false}
@@ -510,7 +521,7 @@ export default function Portfolio() {
                 }
               >
                 <a
-                  href="/Baxtiyar_Alizada_CV_Ing.pdf"
+                  href="/Baxtiyar_Alizada_CV_EN.pdf"
                   target="_blank"
                   rel="noreferrer"
                   className={
@@ -519,14 +530,14 @@ export default function Portfolio() {
                   }
                   onClick={() => setCvOpen(false)}
                 >
-                  <span>English (PDF)</span>
+                  <span>CV (EN)</span>
                   <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
                 </a>
 
                 <div className={dark ? "h-px bg-white/10" : "h-px bg-black/10"} />
 
                 <a
-                  href="/Baxtiyar_Alizada_CV_TR.pdf"
+                  href="/Baxtiyar_Alizada_CV_AZ.pdf"
                   target="_blank"
                   rel="noreferrer"
                   className={
@@ -535,7 +546,7 @@ export default function Portfolio() {
                   }
                   onClick={() => setCvOpen(false)}
                 >
-                  <span>Türkçe (PDF)</span>
+                  <span>CV (AZ)</span>
                   <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
                 </a>
               </motion.div>
@@ -554,13 +565,14 @@ export default function Portfolio() {
             subtitleClass={muted}
           />
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-6 mb-10 flex flex-wrap items-center justify-center gap-2">
             {profile.focus.map((f) => (
               <Pill tone={dark ? "dark" : "light"} key={f}>
                 {f}
               </Pill>
             ))}
           </div>
+
 
           <div className="grid lg:grid-cols-3 gap-6">
             <Card className="p-6 lg:col-span-2">
