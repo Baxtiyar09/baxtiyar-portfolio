@@ -26,7 +26,6 @@ const fadeUp = {
   initial: { opacity: 0, y: 26 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, amount: 0.2 },
-  transition: { duration: 0.6, ease: "easeOut" },
 };
 
 const SectionTitle = ({
@@ -362,7 +361,7 @@ export default function Portfolio() {
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="text-center max-w-3xl"
           >
             <p className={"text-xs uppercase tracking-[0.25em] " + muted}>
@@ -390,7 +389,7 @@ export default function Portfolio() {
                     <motion.span
                       aria-hidden
                       animate={{ y: [0, 4, 0] }}
-                      transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                      transition={{ duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
                       className="inline-flex"
                     >
                       <ChevronDown size={16} />
@@ -448,7 +447,7 @@ export default function Portfolio() {
                   <motion.span
                     aria-hidden
                     animate={{ y: [0, 4, 0] }}
-                    transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
                     className="inline-flex"
                   >
                     <ChevronDown size={16} />
@@ -465,7 +464,7 @@ export default function Portfolio() {
               </div>
             </div>
 
-            
+
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
               {profile.focus.map((f) => (
@@ -478,7 +477,9 @@ export default function Portfolio() {
         </section>
 
         {/* ABOUT */}
-        <motion.section id="about" {...fadeUp} className="py-20">
+        <motion.section id="about" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="py-20">
+
           <SectionTitle
             title="About Me"
             subtitle="Səliqəli kod, stabil arxitektura və yaxşı UX üzərində fokuslanıram."
@@ -540,7 +541,8 @@ export default function Portfolio() {
         </motion.section>
 
         {/* SKILLS */}
-        <motion.section id="skills" {...fadeUp} className="py-20">
+        <motion.section id="skills" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="py-20">
           <SectionTitle
             title="Skills & Technologies"
             subtitle="Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar."
@@ -624,7 +626,8 @@ export default function Portfolio() {
         </motion.section>
 
         {/* PROJECTS */}
-        <motion.section id="projects" {...fadeUp} className="py-20">
+        <motion.section id="projects" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="py-20">
           <SectionTitle
             title="Featured Projects"
             subtitle="Öyrəndiklərimi praktikada tətbiq etdiyim seçilmiş layihələr."
@@ -687,7 +690,8 @@ export default function Portfolio() {
         </motion.section>
 
         {/* CONTACT */}
-        <motion.section id="contact" {...fadeUp} className="py-20">
+        <motion.section id="contact" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="py-20">
           <SectionTitle
             title="Let's Work Together"
             subtitle="Layihə ideyan var? Gəlin danışaq və birlikdə dəyər yaradaq."
