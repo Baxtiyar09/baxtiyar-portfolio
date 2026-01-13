@@ -479,7 +479,7 @@ export default function Portfolio() {
             </div>
 
             {/* Download CV (dropdown) */}
-            <div className="mb-10 relative" ref={cvRef}>
+            <div className="relative mt-4 flex justify-center" ref={cvRef}>
               <Button
                 variant="outline"
                 tone={dark ? "dark" : "light"}
