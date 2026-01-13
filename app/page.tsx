@@ -412,7 +412,7 @@ export default function Portfolio() {
 
                 <Button
                   href={profile.contact.github}
-                  variant="primary"
+                  variant="outline"
                   tone={dark ? "dark" : "light"}
                   className="min-w-[140px]"
                 >
@@ -428,7 +428,7 @@ export default function Portfolio() {
                 </Button>
                 <Button
                   href={`mailto:${profile.contact.email}`}
-                  variant="outline"
+                  variant="primary"
                   tone={dark ? "dark" : "light"}
                   className="min-w-[140px]"
                 >
