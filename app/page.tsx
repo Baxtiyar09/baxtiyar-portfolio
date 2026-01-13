@@ -466,22 +466,21 @@ export default function Portfolio() {
             </div>
 
 
-
             <motion.div
               className="mt-8 flex justify-center"
               animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
             >
               <Button
                 href="/Baxtiyar_Alizada_CV_Ing.pdf"
-                variant="outline"
+                variant="primary"
                 tone={dark ? "dark" : "light"}
-                className="min-w-[160px] bg-emerald-500 text-black hover:bg-emerald-400"
-
+                className="min-w-[170px] bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg"
               >
                 Download CV
               </Button>
             </motion.div>
+
 
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
