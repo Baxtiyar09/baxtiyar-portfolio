@@ -477,13 +477,12 @@ export default function Portfolio() {
                 tone="dark"
                 className="
   min-w-[170px]
-  bg-[#0b1220]
-  text-[#7dd3fc]
-  border border-sky-400/30
-  hover:bg-[#0f172a]
-  hover:border-sky-400/60
-  hover:text-white
+  bg-emerald-900/40
+  text-emerald-300
+  border border-emerald-500/30
+  hover:bg-emerald-900/60
 "
+
               >
                 Download CV
               </Button>
