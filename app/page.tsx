@@ -473,9 +473,18 @@ export default function Portfolio() {
             >
               <Button
                 href="/Baxtiyar_Alizada_CV_Ing.pdf"
-                variant="primary"
-                tone={dark ? "dark" : "light"}
-                className="min-w-[170px] bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg"
+                variant="outline"
+                tone="dark"
+                className="
+      min-w-[170px]
+      bg-[#111]
+      text-white
+      border-white/20
+      hover:bg-[#1a1a1a]
+      hover:border-white/40
+      shadow-[0_0_0_0_rgba(255,255,255,0.1)]
+      hover:shadow-[0_0_20px_rgba(255,255,255,0.12)]
+    "
               >
                 Download CV
               </Button>
