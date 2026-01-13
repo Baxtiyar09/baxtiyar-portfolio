@@ -428,7 +428,7 @@ export default function Portfolio() {
                 </Button>
                 <Button
                   href={`mailto:${profile.contact.email}`}
-                  variant="primary"
+                  variant="outline"
                   tone={dark ? "dark" : "light"}
                   className="min-w-[140px]"
                 >
@@ -472,9 +472,9 @@ export default function Portfolio() {
             >
               <Button
                 href="/Baxtiyar_Alizada_CV_Ing.pdf"
-                variant="primary"
+                variant="outline"
                 tone={dark ? "dark" : "light"}
-                className="min-w-[160px]"
+                className="min-w-[160px] opacity-90 hover:opacity-100"
               >
                 Download CV
               </Button>
@@ -698,7 +698,7 @@ export default function Portfolio() {
                       </Button>
                     )}
                   </div>
-                  
+
                 </Card>
               </motion.div>
             ))}
