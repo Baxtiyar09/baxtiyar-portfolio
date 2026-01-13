@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { Download } from "lucide-react";
 import {
   Github,
   Linkedin,
@@ -416,6 +417,14 @@ export default function Portfolio() {
                   className="min-w-[140px]"
                 >
                   <Github size={16} /> GitHub
+                </Button>
+                <Button
+                  href="/Baxtiyar_Alizada_CV_Ing.pdf"
+                  variant="outline"
+                  tone={dark ? "dark" : "light"}
+                  className="min-w-[140px]"
+                >
+                  Download CV
                 </Button>
                 <Button
                   href={profile.contact.linkedin}
