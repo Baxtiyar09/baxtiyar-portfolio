@@ -476,15 +476,14 @@ export default function Portfolio() {
                 variant="outline"
                 tone="dark"
                 className="
-      min-w-[170px]
-      bg-[#111]
-      text-white
-      border-white/20
-      hover:bg-[#1a1a1a]
-      hover:border-white/40
-      shadow-[0_0_0_0_rgba(255,255,255,0.1)]
-      hover:shadow-[0_0_20px_rgba(255,255,255,0.12)]
-    "
+  min-w-[170px]
+  bg-[#0b1220]
+  text-[#7dd3fc]
+  border border-sky-400/30
+  hover:bg-[#0f172a]
+  hover:border-sky-400/60
+  hover:text-white
+"
               >
                 Download CV
               </Button>
