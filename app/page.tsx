@@ -465,21 +465,28 @@ export default function Portfolio() {
               </div>
             </div>
 
-            <motion.div
-              className="mt-8 flex justify-center"
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
-            >
-              <Button
-                href="/Baxtiyar_Alizada_CV_Ing.pdf"
-                variant="outline"
-                tone={dark ? "dark" : "light"}
-                className="min-w-[160px] border-white/25 bg-white/5 hover:bg-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_30px_rgba(0,0,0,0.35)]"
 
+            <motion.div
+              animate={{ y: [0, -3, 0] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <motion.div
+                className="mt-8 flex justify-center"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
               >
-                Download CV
-              </Button>
+                <Button
+                  href="/Baxtiyar_Alizada_CV_Ing.pdf"
+                  variant="outline"
+                  tone={dark ? "dark" : "light"}
+                  className="min-w-[160px] border-white/25 bg-white/5 hover:bg-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_30px_rgba(0,0,0,0.35)]"
+
+                >
+                  Download CV
+                </Button>
+              </motion.div>
             </motion.div>
+
 
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
