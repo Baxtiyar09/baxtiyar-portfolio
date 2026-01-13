@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Download } from "lucide-react";
 import {
@@ -158,6 +158,19 @@ function useActiveSection(ids: string[]) {
 
 export default function Portfolio() {
   const [dark, setDark] = useState(true);
+
+  const [cvOpen, setCvOpen] = useState(false);
+  const cvRef = useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (!cvRef.current) return;
+      if (!cvRef.current.contains(e.target as Node)) setCvOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
 
   const profile = useMemo(
     () => ({
@@ -465,21 +478,73 @@ export default function Portfolio() {
               </div>
             </div>
 
+               //Download CV dropdown menu -----------------------  
 
-            <motion.div
-              className="mt-8 flex justify-center"
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-            >
+            {/* Download CV (dropdown) */}
+            <div className="relative" ref={cvRef}>
               <Button
-                href="/Baxtiyar_Alizada_CV_Ing.pdf"
                 variant="outline"
                 tone={dark ? "dark" : "light"}
-                className="min-w-[170px] bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg"
+                onClick={() => setCvOpen((v) => !v)}
+                className="min-w-[160px]"
               >
                 Download CV
+                <motion.span
+                  aria-hidden
+                  animate={{ rotate: cvOpen ? 180 : 0 }}
+                  transition={{ duration: 0.18 }}
+                  className="inline-flex"
+                >
+                  <ChevronDown size={16} />
+                </motion.span>
               </Button>
-            </motion.div>
+              <motion.div
+                initial={false}
+                animate={cvOpen ? "open" : "closed"}
+                variants={{
+                  open: { opacity: 1, y: 8, pointerEvents: "auto" },
+                  closed: { opacity: 0, y: 0, pointerEvents: "none" },
+                }}
+                transition={{ duration: 0.18, ease: [0.2, 0.9, 0.2, 1] }}
+                className={
+                  "absolute left-1/2 -translate-x-1/2 mt-2 w-52 rounded-2xl border shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-md overflow-hidden " +
+                  (dark ? "border-white/10 bg-black/70" : "border-black/10 bg-white/90")
+                }
+              >
+                <a
+                  href="/Baxtiyar_Alizada_CV_Ing.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className={
+                    "flex items-center justify-between px-4 py-3 text-sm transition " +
+                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
+                  }
+                  onClick={() => setCvOpen(false)}
+                >
+                  <span>English (PDF)</span>
+                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
+                </a>
+
+                <div className={dark ? "h-px bg-white/10" : "h-px bg-black/10"} />
+
+                <a
+                  href="/Baxtiyar_Alizada_CV_TR.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className={
+                    "flex items-center justify-between px-4 py-3 text-sm transition " +
+                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
+                  }
+                  onClick={() => setCvOpen(false)}
+                >
+                  <span>Türkçe (PDF)</span>
+                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
+                </a>
+              </motion.div>
+            </div>
+
+               //Download CV dropdown menu end -----------------------  
+
 
           </motion.div>
         </section>
@@ -494,17 +559,17 @@ export default function Portfolio() {
             subtitleClass={muted}
           />
 
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+            {profile.focus.map((f) => (
+              <Pill tone={dark ? "dark" : "light"} key={f}>
+                {f}
+              </Pill>
+            ))}
+          </div>
+
           <div className="grid lg:grid-cols-3 gap-6">
             <Card className="p-6 lg:col-span-2">
               <p className={"text-sm leading-relaxed " + muted}>{profile.about}</p>
-
-              <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
-                {profile.focus.map((f) => (
-                  <Pill tone={dark ? "dark" : "light"} key={f}>
-                    {f}
-                  </Pill>
-                ))}
-              </div>
 
               <div className="mt-6 grid sm:grid-cols-2 gap-4">
                 {["Clean Code", "Modern UI/UX", "User-Centered", "Performance"].map(
