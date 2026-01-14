@@ -485,41 +485,93 @@ export default function Portfolio() {
         status: "Live",
         description:
           lang === "en"
-            ? "ATL Academy final project. An Android app designed for movie enthusiasts."
-            : "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
+            ? "ATL Academy final project — an Android app for movie enthusiasts. Browse trending and top-rated titles, explore detailed movie information, and enjoy a smooth, responsive experience powered by MVVM and Retrofit-based API integration."
+            : "ATL Academy final layihəsi — film həvəskarları üçün Android tətbiqi. Trending və Top Rated siyahılarını izləmək, film detallarına baxmaq və MVVM + Retrofit əsaslı API inteqrasiyası ilə rahat istifadə təcrübəsi təqdim edir.",
+        features:
+          lang === "en"
+            ? [
+              "Category-based movie feeds with dynamic data loading",
+              "Dedicated detail screens with structured UI components",
+              "Error, loading, and empty state handling for API calls",
+            ]
+            : [
+              "Kateqoriyalar üzrə dinamik film axınları",
+              "Strukturlaşdırılmış UI komponentləri ilə detail ekranlar",
+              "API sorğuları üçün error, loading və empty state idarəsi",
+            ],
         tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
         link: "https://github.com/Baxtiyar09/moviesApp",
       },
+
       {
         title: "HeyatYolu",
         status: "In progress",
         description:
           lang === "en"
-            ? "A mobile platform that stores memories of loved ones in a digital format."
-            : "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
-        tech: ["Kotlin", "MVVM", "Room", "Firebase"],
+            ? "A digital memory platform designed to preserve stories and memories of loved ones. Built with real backend integration, structured content management, onboarding flow, and carefully handled UI states."
+            : "Yaxınlarını itirmiş insanlar üçün xatirələrin rəqəmsal formada saxlanması məqsədi ilə hazırlanmış platforma. Real backend inteqrasiyası, strukturlaşdırılmış kontent idarəetməsi və stabil UI həlləri ilə qurulub.",
+        features:
+          lang === "en"
+            ? [
+              "Backend-driven data creation, update, and retrieval",
+              "User flows designed around long-term data persistence",
+              "Consistent screen behavior across different data states",
+            ]
+            : [
+              "Backend üzərindən məlumatların yaradılması və idarə olunması",
+              "Uzunmüddətli məlumat saxlanmasına uyğun istifadəçi axınları",
+              "Fərqli data vəziyyətlərində sabit ekran davranışı",
+            ],
+        tech: ["Kotlin", "MVVM", "Backend API", "Authentication"],
       },
+
       {
-        title: "Herac",
+        title: "Herrac",
         status: "Coming soon",
         description:
           lang === "en"
-            ? "Planned to be published on Google Play Store after the next phase is completed."
-            : "Növbəti mərhələdə tam hazırlandıqdan sonra Google Play Store-da yayımlamaq planlaşdırılır.",
+            ? "An upcoming e-commerce-style Android application planned for Google Play. The project focuses on clean architecture, scalability, and performance-oriented UI using modern Android development practices."
+            : "Google Play üçün planlaşdırılan e-commerce tipli Android tətbiqi. Layihə Clean Architecture, genişlənə bilən struktur və performans yönümlü modern UI üzərində qurulur.",
+        features:
+          lang === "en"
+            ? [
+              "Layered architecture with clear separation of concerns",
+              "Scalable project structure prepared for future growth",
+              "UI decisions optimized for smooth runtime performance",
+            ]
+            : [
+              "Layer-lərə ayrılmış və məsuliyyətləri dəqiq bölünmüş arxitektura",
+              "Gələcək genişlənmələr üçün uyğun layihə strukturu",
+              "Rahat və axıcı işləmə üçün optimallaşdırılmış UI yanaşması",
+            ],
         tech: ["Clean Architecture", "Performance", "Modern UI"],
       },
+
       {
         title: "Astrology App",
         status: "Coming soon",
         description:
           lang === "en"
-            ? "A platform that provides zodiac info and daily/weekly forecasts."
-            : "Bürclər haqqında məlumat verən və gündəlik/həftəlik proqnozlar təqdim edən platforma.",
+            ? "A zodiac-based mobile application providing daily and weekly insights. Designed with API-driven content flow, smooth navigation, and a clean, readable UI."
+            : "Bürclər üzrə gündəlik və həftəlik proqnozlar təqdim edən mobil tətbiq. API əsaslı kontent axını, rahat naviqasiya və oxunaqlı modern UI ilə planlaşdırılır.",
+        features:
+          lang === "en"
+            ? [
+              "Centralized data handling for horoscope content",
+              "Screen layouts optimized for text-heavy information",
+              "Navigation flow designed for quick content access",
+            ]
+            : [
+              "Bürc məlumatları üçün mərkəzləşdirilmiş data idarəetməsi",
+              "Mətn ağırlıqlı kontent üçün uyğun ekran strukturları",
+              "Sürətli keçidlər üçün planlaşdırılmış naviqasiya axını",
+            ],
         tech: ["REST API", "Kotlin", "Modern UI"],
       },
     ],
     [lang]
   );
+
 
   const sections = useMemo(
     () => [
