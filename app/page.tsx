@@ -246,35 +246,18 @@ export default function Portfolio() {
         description: "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
         tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
         link: "https://github.com/Baxtiyar09/moviesApp",
-        cover: "/projects/mova/home.png",
-        screenshots: [
-          { src: "/projects/mova/splash.png", label: "Splash" },
-          { src: "/projects/mova/login.png", label: "Login" },
-          { src: "/projects/mova/home.png", label: "Home" },
-          { src: "/projects/mova/detail.png", label: "Detail" },
-        ],
-        highlights: [
-          "REST API (Retrofit) inteqrasiyası",
-          "Home feed + bölmələr (Top Rated, Now Playing)",
-          "Detail screen (actions + info)",
-        ],
+        cover: "projects/covers/mova.png",
       },
       {
         title: "HeyatYolu",
         status: "In progress",
         description: "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
         tech: ["Kotlin", "MVVM", "Room", "Firebase"],
-        cover: "/projects/heyatyolu/home.png",
-        screenshots: [
-          { src: "/projects/heyatyolu/splash.png", label: "Splash" },
-          { src: "/projects/heyatyolu/onboarding.png", label: "Onboarding" },
-          { src: "/projects/heyatyolu/home.png", label: "Home" },
-          { src: "/projects/heyatyolu/loading.png", label: "Loading/Empty State" },
-        ],
+        cover: "//projects/covers/heyatyolu.png",
         highlights: [
-          "Onboarding flow + UX",
-          "List + filter/category məntiqi",
-          "Loading/Empty state (stabil UI)",
+          "Rəhmətə getmiş insanların xatirələrinin toplanması",
+          "İstifadəçi dostu interfeys",
+          "Məlumatların təhlükəsiz saxlanması",
         ],
       },
       {
@@ -283,6 +266,7 @@ export default function Portfolio() {
         description:
           "Növbəti mərhələdə tam hazırlandıqdan sonra Google Play Store-da yayımlamaq planlaşdırılır.",
         tech: ["Clean Architecture", "Performance", "Modern UI"],
+        cover: "/projects/covers/herac.png",
       },
       {
         title: "Astrology App",
@@ -290,6 +274,7 @@ export default function Portfolio() {
         description:
           "Bürclər haqqında məlumat verən və gündəlik/həftəlik proqnozlar təqdim edən platforma.",
         tech: ["REST API", "Kotlin", "Modern UI"],
+        cover: "/projects/covers/astrology.png",
       },
     ],
     []
@@ -762,15 +747,18 @@ export default function Portfolio() {
               >
                 <Card className="p-6 h-full cursor-pointer">
                   {p.cover ? (
-                    <div className="mb-4 h-36 overflow-hidden rounded-xl border border-white/10 bg-black/20 p-3">
-                      <img
-                        src={p.cover}
-                        alt={`${p.title} cover`}
-                        className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.03]"
-                        loading="lazy"
-                      />
+                    <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                      <div className="relative h-44 w-full">
+                        <img
+                          src={p.cover}
+                          alt={`${p.title} cover`}
+                          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                          loading="lazy"
+                        />
+                        {/* dark gradient overlay for better text balance */}
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+                      </div>
                     </div>
-
                   ) : null}
 
                   {/* SƏNİN HAZIRKI CONTENTİN BURDAN AŞAĞI QALSIN */}
@@ -821,90 +809,6 @@ export default function Portfolio() {
 
           </div>
         </motion.section>
-
-        {openProject ? (
-          <div className="fixed inset-0 z-[60]">
-            <div className="absolute inset-0 bg-black/70" onClick={() => setOpenProject(null)} />
-            <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-3xl -translate-x-1/2 -translate-y-1/2">
-              <div className={"rounded-2xl border backdrop-blur-md shadow-[0_18px_60px_rgba(0,0,0,.55)] " + (dark ? "border-white/10 bg-black/80" : "border-black/10 bg-white/90")}>
-                <div className="p-5 md:p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-lg font-semibold">{openProject.title}</div>
-                      <div className={"mt-1 text-sm " + muted}>{openProject.description}</div>
-                    </div>
-                    <button
-                      className={"rounded-xl border px-3 py-1 text-sm " + (dark ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-black/10 bg-black/5 hover:bg-black/10")}
-                      onClick={() => setOpenProject(null)}
-                    >
-                      Close
-                    </button>
-                  </div>
-
-                  {openProject.screenshots?.length ? (
-                    <div className="mt-5">
-                      <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
-                        <img
-                          src={openProject.screenshots[shotIndex].src}
-                          alt={openProject.screenshots[shotIndex].label}
-                          className="h-[420px] w-full object-contain"
-                        />
-                      </div>
-
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <div className={"text-xs " + muted}>
-                          {openProject.screenshots[shotIndex].label} • {shotIndex + 1}/{openProject.screenshots.length}
-                        </div>
-
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setShotIndex((i) => (i - 1 + openProject.screenshots!.length) % openProject.screenshots!.length)}
-                            className={"rounded-xl border px-3 py-1 text-sm " + (dark ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-black/10 bg-black/5 hover:bg-black/10")}
-                          >
-                            Prev
-                          </button>
-                          <button
-                            onClick={() => setShotIndex((i) => (i + 1) % openProject.screenshots!.length)}
-                            className={"rounded-xl border px-3 py-1 text-sm " + (dark ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-black/10 bg-black/5 hover:bg-black/10")}
-                          >
-                            Next
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex gap-2 overflow-auto pb-1">
-                        {openProject.screenshots.map((s, i) => (
-                          <button
-                            key={s.src}
-                            onClick={() => setShotIndex(i)}
-                            className={
-                              "shrink-0 overflow-hidden rounded-xl border transition " +
-                              (i === shotIndex
-                                ? (dark ? "border-white/30" : "border-black/30")
-                                : (dark ? "border-white/10 hover:border-white/20" : "border-black/10 hover:border-black/20"))
-                            }
-                          >
-                            <img src={s.src} alt={s.label} className="h-14 w-24 object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {openProject.highlights?.length ? (
-                    <div className="mt-5">
-                      <div className="text-sm font-medium">Notes</div>
-                      <ul className={"mt-2 list-disc pl-5 text-sm " + muted}>
-                        {openProject.highlights.map((h) => <li key={h}>{h}</li>)}
-                      </ul>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
 
         {/* CONTACT */}
         <motion.section id="contact" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
