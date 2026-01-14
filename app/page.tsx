@@ -246,7 +246,7 @@ export default function Portfolio() {
         description: "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
         tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
         link: "https://github.com/Baxtiyar09/moviesApp",
-        cover: "projects/covers/mova.png",
+        cover: "projects/covers/mova.jpg",
       },
       {
         title: "HeyatYolu",
