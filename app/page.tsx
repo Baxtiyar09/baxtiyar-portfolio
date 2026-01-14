@@ -21,7 +21,11 @@ type Project = {
   tech: string[];
   link?: string;
   status?: "Live" | "In progress" | "Coming soon";
+  cover?: string;
+  screenshots?: { src: string; label: string }[];
+  highlights?: string[];
 };
+
 
 const fadeUp = {
   initial: { opacity: 0, y: 26 },
@@ -158,6 +162,9 @@ function useActiveSection(ids: string[]) {
 
 export default function Portfolio() {
   const [dark, setDark] = useState(true);
+  const [openProject, setOpenProject] = useState<Project | null>(null);
+  const [shotIndex, setShotIndex] = useState(0);
+
 
   const [cvOpen, setCvOpen] = useState(false);
   const cvRef = useRef<HTMLDivElement | null>(null);
@@ -236,17 +243,39 @@ export default function Portfolio() {
       {
         title: "Mova",
         status: "Live",
-        description:
-          "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
+        description: "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
         tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
         link: "https://github.com/Baxtiyar09/moviesApp",
+        cover: "/projects/mova/home.png",
+        screenshots: [
+          { src: "/projects/mova/splash.png", label: "Splash" },
+          { src: "/projects/mova/login.png", label: "Login" },
+          { src: "/projects/mova/home.png", label: "Home" },
+          { src: "/projects/mova/detail.png", label: "Detail" },
+        ],
+        highlights: [
+          "REST API (Retrofit) inteqrasiyası",
+          "Home feed + bölmələr (Top Rated, Now Playing)",
+          "Detail screen (actions + info)",
+        ],
       },
       {
         title: "HeyatYolu",
         status: "In progress",
-        description:
-          "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
+        description: "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
         tech: ["Kotlin", "MVVM", "Room", "Firebase"],
+        cover: "/projects/heyatyolu/home.png",
+        screenshots: [
+          { src: "/projects/heyatyolu/splash.png", label: "Splash" },
+          { src: "/projects/heyatyolu/onboarding.png", label: "Onboarding" },
+          { src: "/projects/heyatyolu/home.png", label: "Home" },
+          { src: "/projects/heyatyolu/loading.png", label: "Loading/Empty State" },
+        ],
+        highlights: [
+          "Onboarding flow + UX",
+          "List + filter/category məntiqi",
+          "Loading/Empty state (stabil UI)",
+        ],
       },
       {
         title: "Herac",
@@ -726,14 +755,26 @@ export default function Portfolio() {
             {projects.map((p) => (
               <motion.div
                 key={p.title}
-                whileHover={{ y: -4 }}
-                transition={{ duration: 0.2 }}
+                whileHover={{ y: -6 }}
+                transition={{ type: "spring", stiffness: 260, damping: 18 }}
+                className="group"
+                onClick={() => { setOpenProject(p); setShotIndex(0); }}
               >
-                <Card className="p-6 h-full">
+                <Card className="p-6 h-full cursor-pointer">
+                  {p.cover ? (
+                    <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                      <img
+                        src={p.cover}
+                        alt={`${p.title} cover`}
+                        className="h-48 w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                        loading="lazy"
+                      />
+                    </div>
+                  ) : null}
+
+                  {/* SƏNİN HAZIRKI CONTENTİN BURDAN AŞAĞI QALSIN */}
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-lg font-semibold tracking-tight">
-                      {p.title}
-                    </h3>
+                    <h3 className="text-lg font-semibold tracking-tight">{p.title}</h3>
                     {p.status ? (
                       <span
                         className={
@@ -748,9 +789,7 @@ export default function Portfolio() {
                     ) : null}
                   </div>
 
-                  <p className={"mt-2 text-sm leading-relaxed " + muted}>
-                    {p.description}
-                  </p>
+                  <p className={"mt-2 text-sm leading-relaxed " + muted}>{p.description}</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     {p.tech.map((t) => (
@@ -760,23 +799,111 @@ export default function Portfolio() {
                     ))}
                   </div>
 
-                  <div className="mt-6">
+                  <div className="mt-6" onClick={(e) => e.stopPropagation()}>
                     {p.link ? (
                       <Button href={p.link} variant="outline" tone={dark ? "dark" : "light"}>
                         <Github size={16} /> View on GitHub
                       </Button>
                     ) : (
-                      <Button variant="outline" tone={dark ? "dark" : "light"} onClick={() => scrollTo("contact")}>
+                      <Button
+                        variant="outline"
+                        tone={dark ? "dark" : "light"}
+                        onClick={() => scrollTo("contact")}
+                      >
                         <Mail size={16} /> Ask for details
                       </Button>
                     )}
                   </div>
-
                 </Card>
               </motion.div>
             ))}
+
           </div>
         </motion.section>
+
+        {openProject ? (
+          <div className="fixed inset-0 z-[60]">
+            <div className="absolute inset-0 bg-black/70" onClick={() => setOpenProject(null)} />
+            <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-3xl -translate-x-1/2 -translate-y-1/2">
+              <div className={"rounded-2xl border backdrop-blur-md shadow-[0_18px_60px_rgba(0,0,0,.55)] " + (dark ? "border-white/10 bg-black/80" : "border-black/10 bg-white/90")}>
+                <div className="p-5 md:p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-lg font-semibold">{openProject.title}</div>
+                      <div className={"mt-1 text-sm " + muted}>{openProject.description}</div>
+                    </div>
+                    <button
+                      className={"rounded-xl border px-3 py-1 text-sm " + (dark ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-black/10 bg-black/5 hover:bg-black/10")}
+                      onClick={() => setOpenProject(null)}
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  {openProject.screenshots?.length ? (
+                    <div className="mt-5">
+                      <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+                        <img
+                          src={openProject.screenshots[shotIndex].src}
+                          alt={openProject.screenshots[shotIndex].label}
+                          className="h-[420px] w-full object-contain"
+                        />
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <div className={"text-xs " + muted}>
+                          {openProject.screenshots[shotIndex].label} • {shotIndex + 1}/{openProject.screenshots.length}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShotIndex((i) => (i - 1 + openProject.screenshots!.length) % openProject.screenshots!.length)}
+                            className={"rounded-xl border px-3 py-1 text-sm " + (dark ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-black/10 bg-black/5 hover:bg-black/10")}
+                          >
+                            Prev
+                          </button>
+                          <button
+                            onClick={() => setShotIndex((i) => (i + 1) % openProject.screenshots!.length)}
+                            className={"rounded-xl border px-3 py-1 text-sm " + (dark ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-black/10 bg-black/5 hover:bg-black/10")}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex gap-2 overflow-auto pb-1">
+                        {openProject.screenshots.map((s, i) => (
+                          <button
+                            key={s.src}
+                            onClick={() => setShotIndex(i)}
+                            className={
+                              "shrink-0 overflow-hidden rounded-xl border transition " +
+                              (i === shotIndex
+                                ? (dark ? "border-white/30" : "border-black/30")
+                                : (dark ? "border-white/10 hover:border-white/20" : "border-black/10 hover:border-black/20"))
+                            }
+                          >
+                            <img src={s.src} alt={s.label} className="h-14 w-24 object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {openProject.highlights?.length ? (
+                    <div className="mt-5">
+                      <div className="text-sm font-medium">Notes</div>
+                      <ul className={"mt-2 list-disc pl-5 text-sm " + muted}>
+                        {openProject.highlights.map((h) => <li key={h}>{h}</li>)}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
 
         {/* CONTACT */}
         <motion.section id="contact" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
