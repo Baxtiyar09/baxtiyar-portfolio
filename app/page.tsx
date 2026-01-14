@@ -762,14 +762,15 @@ export default function Portfolio() {
               >
                 <Card className="p-6 h-full cursor-pointer">
                   {p.cover ? (
-                    <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                    <div className="mb-4 h-36 overflow-hidden rounded-xl border border-white/10 bg-black/20 p-3">
                       <img
                         src={p.cover}
                         alt={`${p.title} cover`}
-                        className="h-48 w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                        className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.03]"
                         loading="lazy"
                       />
                     </div>
+
                   ) : null}
 
                   {/* SƏNİN HAZIRKI CONTENTİN BURDAN AŞAĞI QALSIN */}
