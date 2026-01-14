@@ -76,7 +76,7 @@ const Card = ({
 }) => (
   <div
     className={
-      "rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_40px_rgba(0,0,0,.35)] backdrop-blur-md " +
+      "rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_40px_rgba(0,0,0,.35)] backdrop-blur-md max-md:backdrop-blur-none" +
       className
     }
   >
@@ -311,7 +311,7 @@ export default function Portfolio() {
       </div>
 
       {/* Navbar */}
-      <div className={`fixed top-0 left-0 right-0 z-50 ${navBg} backdrop-blur-md border-b ${border}`}>
+      <div className={`fixed top-0 left-0 right-0 z-50 ${navBg} backdrop-blur-md max-md:backdrop-blur-none border-b ${border}`}>
         <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between">
           <button
             onClick={() => scrollTo("home")}
@@ -516,7 +516,7 @@ export default function Portfolio() {
                 }}
                 transition={{ duration: 0.18, ease: [0.2, 0.9, 0.2, 1] }}
                 className={
-                  "absolute left-1/2 -translate-x-1/2 mt-2 w-52 rounded-2xl border shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-md overflow-hidden " +
+                  "absolute left-1/2 -translate-x-1/2 mt-2 w-52 rounded-2xl border shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-md max-md:backdrop-blur-none overflow-hidden " +
                   (dark ? "border-white/10 bg-black/70" : "border-black/10 bg-white/90")
                 }
               >
