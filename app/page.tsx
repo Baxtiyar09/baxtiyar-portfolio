@@ -253,7 +253,7 @@ export default function Portfolio() {
         status: "In progress",
         description: "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
         tech: ["Kotlin", "MVVM", "Room", "Firebase"],
-        cover: "//projects/covers/heyatyolu.png",
+        cover: "/projects/covers/heyatyolu.png",
         highlights: [
           "Rəhmətə getmiş insanların xatirələrinin toplanması",
           "İstifadəçi dostu interfeys",
