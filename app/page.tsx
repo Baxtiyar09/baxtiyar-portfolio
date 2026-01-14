@@ -1,7 +1,12 @@
 "use client";
 
-import React, { useMemo, useState, useRef } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import React, { useMemo, useRef, useState } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useInView,
+  type Variants,
+} from "framer-motion";
 import {
   Github,
   Linkedin,
@@ -15,6 +20,8 @@ import {
   Languages,
 } from "lucide-react";
 
+type Lang = "en" | "az";
+
 type Project = {
   title: string;
   description: string;
@@ -22,29 +29,6 @@ type Project = {
   link?: string;
   status?: "Live" | "In progress" | "Coming soon";
 };
-
-type Lang = "en" | "az";
-
-// ---------- Motion helpers (iOS-friendly) ----------
-const easeOut = [0.16, 1, 0.3, 1] as const;
-
-const makeFadeUp = (reduce: boolean, y = 18) => ({
-  hidden: { opacity: 0, y: reduce ? 0 : y },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: reduce ? 0.01 : 0.55, ease: easeOut },
-  },
-});
-
-const makeStagger = (reduce: boolean, delayChildren = 0.06, stagger = 0.06) => ({
-  hidden: {},
-  show: {
-    transition: reduce
-      ? { duration: 0.01 }
-      : { delayChildren, staggerChildren: stagger },
-  },
-});
 
 const SectionTitle = ({
   title,
@@ -56,9 +40,15 @@ const SectionTitle = ({
   subtitleClass?: string;
 }) => (
   <div className="text-center mb-10">
-    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">{title}</h2>
+    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+      {title}
+    </h2>
     {subtitle ? (
-      <p className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${subtitleClass ?? "text-white/60"}`}>
+      <p
+        className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${
+          subtitleClass ?? "text-white/60"
+        }`}
+      >
         {subtitle}
       </p>
     ) : null}
@@ -94,7 +84,7 @@ const Card = ({
   <div
     className={
       // Desktop: blur + shadow
-      // Mobile: blur OFF + shadow OFF (iOS performans üçün)
+      // Mobile (iOS): blur OFF + shadow OFF (performans)
       "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_10px_40px_rgba(0,0,0,.35)] " +
       "max-md:backdrop-blur-0 max-md:shadow-none " +
       className
@@ -128,8 +118,8 @@ const Button = ({
         ? "bg-white text-black hover:bg-white/90"
         : "bg-black text-white hover:bg-black/90"
       : tone === "dark"
-        ? "border border-white/15 bg-white/5 text-white hover:bg-white/10"
-        : "border border-black/15 bg-black/5 text-black hover:bg-black/10";
+      ? "border border-white/15 bg-white/5 text-white hover:bg-white/10"
+      : "border border-black/15 bg-black/5 text-black hover:bg-black/10";
 
   const isHashLink = typeof href === "string" && href.startsWith("#");
   const isExternal = typeof href === "string" && /^https?:\/\//.test(href);
@@ -164,7 +154,9 @@ function useActiveSection(ids: string[]) {
       (entries) => {
         const visible = entries
           .filter((e) => e.isIntersecting)
-          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0));
+          .sort(
+            (a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0)
+          );
         if (visible[0]?.target?.id) setActive(visible[0].target.id);
       },
       { root: null, threshold: [0.2, 0.35, 0.5], rootMargin: "-20% 0px -60% 0px" }
@@ -175,6 +167,78 @@ function useActiveSection(ids: string[]) {
   }, [ids]);
 
   return active;
+}
+
+/** ---------- Motion helpers (performans-friendly) ---------- */
+const makeReveal = (reduce: boolean): Variants => ({
+  hidden: { opacity: 0, y: reduce ? 0 : 18 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: reduce
+      ? { duration: 0.01 }
+      : { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+  },
+});
+
+const makeStagger = (reduce: boolean, stagger = 0.08): Variants => ({
+  hidden: {},
+  show: {
+    transition: reduce
+      ? { duration: 0.01 }
+      : { staggerChildren: stagger, delayChildren: 0.05 },
+  },
+});
+
+/** ---------- Skill Row (bar soldan-sağa dolur) ---------- */
+function SkillRow({
+  name,
+  level,
+  dark,
+  muted,
+  reduceMotion,
+}: {
+  name: string;
+  level: number;
+  dark: boolean;
+  muted: string;
+  reduceMotion: boolean;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(ref, { once: true, amount: 0.35 });
+
+  const track = dark ? "bg-white/10" : "bg-black/10";
+  const fill = dark ? "bg-white" : "bg-black";
+
+  // iOS üçün width anim yox, transform: scaleX
+  const scaleX = Math.max(0, Math.min(1, level / 100));
+
+  return (
+    <div ref={ref}>
+      <div className="flex items-center justify-between text-sm">
+        <span className={dark ? "text-white" : "text-black"}>{name}</span>
+        <span className={muted}>{level}%</span>
+      </div>
+
+      <div className={"mt-2 h-2 rounded-full overflow-hidden " + track}>
+        <motion.div
+          className={"h-full rounded-full " + fill}
+          style={{ transformOrigin: "left center" }}
+          initial={{ scaleX: 0 }}
+          animate={
+            inView
+              ? { scaleX }
+              : { scaleX: 0 }
+          }
+          transition={
+            reduceMotion
+              ? { duration: 0.01 }
+              : { duration: 0.9, ease: [0.16, 1, 0.3, 1] }
+          }
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function Portfolio() {
@@ -195,146 +259,153 @@ export default function Portfolio() {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  // ✅ TEXT DICTIONARY
-  const dict = useMemo(
-    () => ({
-      en: {
-        nav: { home: "Home", about: "About", skills: "Skills", projects: "Projects", contact: "Contact" },
-        hero: {
-          title: "Junior Android Developer",
-          headline:
-            "I build user-friendly, high-performance, and reliable mobile apps using modern Android technologies.",
-          viewWork: "View My Work",
-          projects: "Projects",
-          contact: "Contact",
-          downloadCV: "Download CV",
-          tooltip: "Scroll to projects",
-        },
-        about: {
-          title: "About Me",
-          subtitle: "I focus on clean code, stable architecture, and great UX.",
-          aboutText:
-            "I'm a Junior Android Developer who is curious about new technologies, eager to learn, and effective in a team. I keep improving by applying my skills in real projects. My goal is to create reliable, high-quality, and easy-to-use mobile applications that deliver value.",
-          focus: [
-            "MVVM & Clean Architecture",
-            "Asynchronous programming (Coroutines, Flow)",
-            "REST API integration",
-            "Working with new technologies",
-          ],
-          cards: {
-            clean: { title: "Clean Code", desc: "Readable and maintainable code structure." },
-            ui: { title: "Modern UI/UX", desc: "Clean layouts and animations with a Material approach." },
-            user: { title: "User-Centered", desc: "Simple, clear, and comfortable user experience." },
-            perf: { title: "Performance", desc: "Optimized behavior and fast screens." },
-          },
-          journeyTitle: "My Journey",
-          journeyText:
-            "I strengthen my skills by working on real Android projects and continuously learning new technologies.",
-        },
-        skills: {
-          title: "Skills & Technologies",
-          subtitle: "Key technologies I use to build Android applications.",
-          core: "Core Expertise",
-          stack: "Technology Stack",
-          stats: { level: "Level", projects: "Projects", learning: "Learning" },
-        },
-        projects: {
-          title: "Featured Projects",
-          subtitle: "Selected projects where I applied what I learned in practice.",
-          viewGitHub: "View on GitHub",
-          askDetails: "Ask for details",
-        },
-        contact: {
-          title: "Let's Work Together",
-          subtitle: "Have an idea? Let's talk and create something valuable together.",
-          getInTouch: "Get in Touch",
-          sendMsg: "Send a Message",
-          phoneLabel: "Phone",
-          form: {
-            name: "Your Name",
-            email: "Your Email",
-            message: "Your Message",
-            send: "Send Message",
-            note: "* This form is a demo. Later we can add real sending via EmailJS or a backend.",
-            alert: "Message sent (demo). You can also reach me by email.",
-          },
-        },
-        footer: "Built with Next.js, Tailwind CSS & Framer Motion.",
-        a11y: { theme: "Toggle theme", lang: "Toggle language" },
+  const t = useMemo(() => {
+    const en = {
+      nav: { home: "Home", about: "About", skills: "Skills", projects: "Projects", contact: "Contact" },
+      hero: {
+        title: "Junior Android Developer",
+        headline:
+          "I build user-friendly, performant, and reliable Android apps using modern Android technologies.",
+        viewWork: "View My Work",
+        projects: "Projects",
+        contact: "Contact",
+        downloadCV: "Download CV",
+        scrollTip: "Scroll to projects",
       },
-      az: {
-        nav: { home: "Əsas", about: "Haqqımda", skills: "Bacarıqlar", projects: "Layihələr", contact: "Əlaqə" },
-        hero: {
-          title: "Junior Android Developer",
-          headline:
-            "Müasir Android texnologiyalarından istifadə edərək istifadəçi dostu, performanslı və etibarlı mobil tətbiqlər hazırlayıram.",
-          viewWork: "İşlərimə bax",
-          projects: "Layihələr",
-          contact: "Əlaqə",
-          downloadCV: "CV Yüklə",
-          tooltip: "Layihələr bölməsinə keç",
+      about: {
+        title: "About Me",
+        subtitle: "I focus on clean code, solid architecture, and a great UX.",
+        journeyTitle: "My Journey",
+        journeyText:
+          "I strengthen my skills by building real projects and continuously learning new technologies in Android development.",
+        cards: {
+          clean: "Readable, maintainable code structure.",
+          ui: "Clean layouts and smooth UI animations with a modern approach.",
+          user: "Simple, clear, user-friendly experiences.",
+          perf: "Optimized behavior and fast screens.",
         },
-        about: {
-          title: "Haqqımda",
-          subtitle: "Səliqəli kod, stabil arxitektura və yaxşı UX üzərində fokuslanıram.",
-          aboutText:
-            "Yeni texnologiyalara açıq, öyrənməyə maraqlı və komandada effektiv işləyən Junior Android Developerəm. Bilik və bacarıqlarımı real layihələrdə tətbiq edərək daim inkişaf etməyə çalışıram. Məqsədim istifadəsi rahat, etibarlı və keyfiyyətli mobil tətbiqlər hazırlayaraq dəyər yaratmaqdır.",
-          focus: [
-            "MVVM & Clean Architecture",
-            "Asinxron proqramlaşdırma (Coroutines, Flow)",
-            "REST API inteqrasiyası",
-            "Yeni texnologiyalarla işləmək",
-          ],
-          cards: {
-            clean: { title: "Clean Code", desc: "Oxunaqlı və maintainable kod strukturu." },
-            ui: { title: "Modern UI/UX", desc: "Material yanaşma, səliqəli layout və animasiyalar." },
-            user: { title: "User-Centered", desc: "İstifadəçiyə rahat, sadə və aydın təcrübə." },
-            perf: { title: "Performance", desc: "Optimallaşdırılmış iş prinsipi və sürətli ekranlar." },
-          },
-          journeyTitle: "Mənim yolum",
-          journeyText:
-            "Android sahəsində real layihələr üzərində işləyərək biliklərimi praktikada möhkəmləndirirəm və daim yeni texnologiyalar öyrənirəm.",
-        },
-        skills: {
-          title: "Bacarıqlar və Texnologiyalar",
-          subtitle: "Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar.",
-          core: "Əsas bacarıqlar",
-          stack: "Texnologiya Stack-i",
-          stats: { level: "Səviyyə", projects: "Layihə", learning: "Öyrənmə" },
-        },
-        projects: {
-          title: "Seçilmiş Layihələr",
-          subtitle: "Öyrəndiklərimi praktikada tətbiq etdiyim seçilmiş layihələr.",
-          viewGitHub: "GitHub-da bax",
-          askDetails: "Ətraflı soruş",
-        },
-        contact: {
-          title: "Gəlin birlikdə işləyək",
-          subtitle: "Layihə ideyan var? Gəlin danışaq və birlikdə dəyər yaradaq.",
-          getInTouch: "Əlaqə",
-          sendMsg: "Mesaj yaz",
-          phoneLabel: "Telefon",
-          form: {
-            name: "Adınız",
-            email: "Email",
-            message: "Mesajınız",
-            send: "Göndər",
-            note: "* Bu form demo kimidir. Sonradan EmailJS və ya backend ilə real göndərmə əlavə edərik.",
-            alert: "Mesaj göndərildi (demo). Email ilə də yaza bilərsiniz.",
-          },
-        },
-        footer: "Next.js, Tailwind CSS və Framer Motion ilə hazırlanıb.",
-        a11y: { theme: "Tema dəyiş", lang: "Dili dəyiş" },
       },
-    }),
-    []
-  );
+      skills: {
+        title: "Skills & Technologies",
+        subtitle: "Main technologies I use to build Android applications.",
+        core: "Core Expertise",
+        stack: "Technology Stack",
+        stat1: "Level",
+        stat2: "Projects",
+        stat3: "Learning",
+      },
+      projects: {
+        title: "Featured Projects",
+        subtitle: "Selected projects where I applied what I learned in practice.",
+        viewGithub: "View on GitHub",
+        askDetails: "Ask for details",
+      },
+      contact: {
+        title: "Let's Work Together",
+        subtitle: "Have a project idea? Let's talk and create value together.",
+        getInTouch: "Get in Touch",
+        sendMsg: "Send a Message",
+        phoneLabel: "Phone",
+        form: {
+          name: "Your Name",
+          email: "Your Email",
+          message: "Your Message",
+          send: "Send Message",
+          note:
+            "* This form is a demo. Later we can add real sending via EmailJS or a backend.",
+          alert: "Message sent (demo). You can also contact me via email.",
+        },
+      },
+      footer: (name: string) =>
+        `© ${new Date().getFullYear()} ${name}. Built with Next.js, Tailwind CSS & Framer Motion.`,
+    };
 
-  const t = dict[lang];
+    const az = {
+      nav: { home: "Home", about: "Haqqımda", skills: "Bacarıqlar", projects: "Layihələr", contact: "Əlaqə" },
+      hero: {
+        title: "Junior Android Developer",
+        headline:
+          "Müasir Android texnologiyalarından istifadə edərək istifadəçi dostu, performanslı və etibarlı mobil tətbiqlər hazırlayıram.",
+        viewWork: "İşlərimə bax",
+        projects: "Layihələr",
+        contact: "Əlaqə",
+        downloadCV: "CV Yüklə",
+        scrollTip: "Layihələrə keç",
+      },
+      about: {
+        title: "Haqqımda",
+        subtitle: "Səliqəli kod, stabil arxitektura və yaxşı UX üzərində fokuslanıram.",
+        journeyTitle: "Yolum",
+        journeyText:
+          "Android sahəsində real layihələr üzərində işləyərək biliklərimi praktikada möhkəmləndirirəm və daim yeni texnologiyalar öyrənirəm.",
+        cards: {
+          clean: "Oxunaqlı və maintainable kod strukturu.",
+          ui: "Material yanaşma, səliqəli layout və animasiyalar.",
+          user: "İstifadəçiyə rahat, sadə və aydın təcrübə.",
+          perf: "Optimallaşdırılmış iş prinsipi və sürətli ekranlar.",
+        },
+      },
+      skills: {
+        title: "Bacarıqlar və Texnologiyalar",
+        subtitle: "Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar.",
+        core: "Əsas Bacarıqlar",
+        stack: "Texnologiya Stack",
+        stat1: "Səviyyə",
+        stat2: "Layihə",
+        stat3: "Öyrənmə",
+      },
+      projects: {
+        title: "Layihələr",
+        subtitle: "Öyrəndiklərimi praktikada tətbiq etdiyim seçilmiş layihələr.",
+        viewGithub: "GitHub-da bax",
+        askDetails: "Detallar üçün yaz",
+      },
+      contact: {
+        title: "Birlikdə işləyək",
+        subtitle: "Layihə ideyan var? Gəlin danışaq və birlikdə dəyər yaradaq.",
+        getInTouch: "Əlaqə",
+        sendMsg: "Mesaj göndər",
+        phoneLabel: "Telefon",
+        form: {
+          name: "Adınız",
+          email: "Email",
+          message: "Mesajınız",
+          send: "Göndər",
+          note:
+            "* Bu form demo kimidir. Sonradan EmailJS və ya backend ilə real göndərmə əlavə edərik.",
+          alert: "Mesaj göndərildi (demo). Email ilə də yaza bilərsiniz.",
+        },
+      },
+      footer: (name: string) =>
+        `© ${new Date().getFullYear()} ${name}. Next.js, Tailwind CSS & Framer Motion ilə hazırlanıb.`,
+    };
+
+    return lang === "en" ? en : az;
+  }, [lang]);
 
   const profile = useMemo(
     () => ({
       name: "Baxtiyar Alizada",
+      title: t.hero.title,
+      headline: t.hero.headline,
+      about:
+        lang === "en"
+          ? "I’m a junior Android developer who’s curious, eager to learn, and effective in teamwork. I keep improving by applying my skills in real projects. My goal is to build reliable, high-quality apps that are comfortable to use and create value."
+          : "Yeni texnologiyalara açıq, öyrənməyə maraqlı və komandada effektiv işləyən Junior Android Developerəm. Bilik və bacarıqlarımı real layihələrdə tətbiq edərək daim inkişaf etməyə çalışıram. Məqsədim istifadəsi rahat, etibarlı və keyfiyyətli mobil tətbiqlər hazırlayaraq dəyər yaratmaqdır.",
+      focus:
+        lang === "en"
+          ? [
+              "MVVM & Clean Architecture",
+              "Async programming (Coroutines, Flow)",
+              "REST API integration",
+              "Working with new technologies",
+            ]
+          : [
+              "MVVM & Clean Architecture",
+              "Asinxron proqramlaşdırma (Coroutines, Flow)",
+              "REST API inteqrasiyası",
+              "Yeni texnologiyalarla işləmək",
+            ],
       contact: {
         email: "baxtiyaralizada1@gmail.com",
         phone: "077 333 98 31",
@@ -343,7 +414,7 @@ export default function Portfolio() {
         location: "Azerbaijan",
       },
     }),
-    []
+    [lang, t.hero.title, t.hero.headline, t]
   );
 
   const skills = useMemo(
@@ -387,7 +458,7 @@ export default function Portfolio() {
         status: "Live",
         description:
           lang === "en"
-            ? "ATL Academy final project. An Android app made for movie lovers."
+            ? "ATL Academy final project. An Android app designed for movie enthusiasts."
             : "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
         tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
         link: "https://github.com/Baxtiyar09/moviesApp",
@@ -397,7 +468,7 @@ export default function Portfolio() {
         status: "In progress",
         description:
           lang === "en"
-            ? "A mobile platform that preserves memories of loved ones in digital form."
+            ? "A mobile platform that stores memories of loved ones in a digital format."
             : "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
         tech: ["Kotlin", "MVVM", "Room", "Firebase"],
       },
@@ -406,7 +477,7 @@ export default function Portfolio() {
         status: "Coming soon",
         description:
           lang === "en"
-            ? "Planned to be published on Google Play Store after completion."
+            ? "Planned to be published on Google Play Store after the next phase is completed."
             : "Növbəti mərhələdə tam hazırlandıqdan sonra Google Play Store-da yayımlamaq planlaşdırılır.",
         tech: ["Clean Architecture", "Performance", "Modern UI"],
       },
@@ -415,7 +486,7 @@ export default function Portfolio() {
         status: "Coming soon",
         description:
           lang === "en"
-            ? "A platform that provides zodiac information and daily/weekly predictions."
+            ? "A platform that provides zodiac info and daily/weekly forecasts."
             : "Bürclər haqqında məlumat verən və gündəlik/həftəlik proqnozlar təqdim edən platforma.",
         tech: ["REST API", "Kotlin", "Modern UI"],
       },
@@ -446,16 +517,10 @@ export default function Portfolio() {
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const iconBtn =
-    "h-9 w-9 grid place-items-center rounded-xl border transition " +
-    (dark
-      ? "border-white/10 bg-white/5 hover:bg-white/10"
-      : "border-black/10 bg-black/5 hover:bg-black/10");
-
-  // Shared variants
-  const fadeUp = makeFadeUp(!!reduceMotion, 18);
-  const fadeUpBig = makeFadeUp(!!reduceMotion, 26);
-  const stagger = makeStagger(!!reduceMotion, 0.08, 0.07);
+  // motion variants
+  const reveal = makeReveal(!!reduceMotion);
+  const stagger = makeStagger(!!reduceMotion, 0.085);
+  const heroStagger = makeStagger(!!reduceMotion, 0.09);
 
   return (
     <div className={`min-h-screen ${bg}`}>
@@ -475,16 +540,15 @@ export default function Portfolio() {
         />
       </div>
 
-      {/* Navbar */}
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={fadeUp}
+      {/* Navbar (MOBIL-də blur söndürülüb) */}
+      <div
         className={`fixed top-0 left-0 right-0 z-50 ${navBg} border-b ${border} backdrop-blur-md max-md:backdrop-blur-0`}
-        style={{ willChange: "transform, opacity" }}
       >
         <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between">
-          <button onClick={() => scrollTo("home")} className="text-sm font-semibold tracking-wide">
+          <button
+            onClick={() => scrollTo("home")}
+            className="text-sm font-semibold tracking-wide"
+          >
             AndroidDev
           </button>
 
@@ -502,11 +566,16 @@ export default function Portfolio() {
                         ? "text-white"
                         : "text-black"
                       : dark
-                        ? "text-white/60 hover:text-white"
-                        : "text-black/55 hover:text-black")
+                      ? "text-white/60 hover:text-white"
+                      : "text-black/55 hover:text-black")
                   }
                 >
-                  <span className={"px-2 py-1 rounded-lg " + (isActive ? (dark ? "bg-white/10" : "bg-black/5") : "")}>
+                  <span
+                    className={
+                      "px-2 py-1 rounded-lg " +
+                      (isActive ? (dark ? "bg-white/10" : "bg-black/5") : "")
+                    }
+                  >
                     {s.label}
                   </span>
                 </button>
@@ -517,61 +586,68 @@ export default function Portfolio() {
           <div className="flex items-center gap-2">
             {/* Language toggle */}
             <button
-              onClick={() => setLang((p) => (p === "en" ? "az" : "en"))}
-              className={iconBtn}
-              aria-label={t.a11y.lang}
-              title={lang === "en" ? "AZ" : "EN"}
+              onClick={() => setLang((v) => (v === "en" ? "az" : "en"))}
+              className={
+                "h-9 w-9 grid place-items-center rounded-xl border transition " +
+                (dark
+                  ? "border-white/10 bg-white/5 hover:bg-white/10"
+                  : "border-black/10 bg-black/5 hover:bg-black/10")
+              }
+              aria-label="Toggle language"
+              title={lang === "en" ? "Switch to Azerbaijani" : "İngiliscəyə keç"}
             >
               <Languages size={16} />
             </button>
 
             {/* Theme toggle */}
-            <button onClick={() => setDark((v) => !v)} className={iconBtn} aria-label={t.a11y.theme}>
+            <button
+              onClick={() => setDark((v) => !v)}
+              className={
+                "h-9 w-9 grid place-items-center rounded-xl border transition " +
+                (dark
+                  ? "border-white/10 bg-white/5 hover:bg-white/10"
+                  : "border-black/10 bg-black/5 hover:bg-black/10")
+              }
+              aria-label="Toggle theme"
+            >
               {dark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Content */}
       <div className="relative mx-auto max-w-6xl px-5 pt-28 pb-16">
-        {/* HERO (page open smooth) */}
+        {/* HERO (on load: smooth stagger) */}
         <section id="home" className="min-h-[78vh] grid place-items-center">
           <motion.div
+            variants={heroStagger}
             initial="hidden"
             animate="show"
-            variants={stagger}
             className="text-center max-w-3xl"
           >
             <motion.p
-              variants={fadeUp}
+              variants={reveal}
               className={"text-xs uppercase tracking-[0.25em] " + muted}
-              style={{ willChange: "transform, opacity" }}
             >
-              {t.hero.title}
+              {profile.title}
             </motion.p>
 
             <motion.h1
-              variants={fadeUpBig}
+              variants={reveal}
               className="mt-3 text-4xl md:text-6xl font-semibold tracking-tight"
-              style={{ willChange: "transform, opacity" }}
             >
               {profile.name}
             </motion.h1>
 
             <motion.p
-              variants={fadeUp}
+              variants={reveal}
               className={"mt-5 text-sm md:text-base leading-relaxed " + muted}
-              style={{ willChange: "transform, opacity" }}
             >
-              {t.hero.headline}
+              {profile.headline}
             </motion.p>
 
-            <motion.div
-              variants={fadeUp}
-              className="mt-8 flex flex-wrap items-center justify-center gap-3"
-              style={{ willChange: "transform, opacity" }}
-            >
+            <motion.div variants={reveal} className="mt-8 flex flex-wrap items-center justify-center gap-3">
               {/* Desktop / Tablet CTAs */}
               <div className="hidden sm:flex flex-wrap items-center justify-center gap-3">
                 <div className="relative group">
@@ -585,7 +661,15 @@ export default function Portfolio() {
                     <motion.span
                       aria-hidden
                       animate={reduceMotion ? undefined : { y: [0, 4, 0] }}
-                      transition={reduceMotion ? undefined : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
+                      transition={
+                        reduceMotion
+                          ? undefined
+                          : {
+                              duration: 1.1,
+                              repeat: Infinity,
+                              ease: [0.4, 0, 0.2, 1],
+                            }
+                      }
                       className="inline-flex"
                     >
                       <ChevronDown size={16} />
@@ -595,47 +679,86 @@ export default function Portfolio() {
                   <div
                     className={
                       "pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 rounded-lg border px-3 py-1 text-[11px] opacity-0 translate-y-1 transition group-hover:opacity-100 group-hover:translate-y-0 " +
-                      (dark ? "border-white/10 bg-black/70 text-white/80" : "border-black/10 bg-white/90 text-black/70")
+                      (dark
+                        ? "border-white/10 bg-black/70 text-white/80"
+                        : "border-black/10 bg-white/90 text-black/70")
                     }
                   >
-                    {t.hero.tooltip}
+                    {t.hero.scrollTip}
                   </div>
                 </div>
 
-                <Button href={profile.contact.github} variant="outline" tone={dark ? "dark" : "light"} className="min-w-[140px]">
+                <Button
+                  href={profile.contact.github}
+                  variant="outline"
+                  tone={dark ? "dark" : "light"}
+                  className="min-w-[140px]"
+                >
                   <Github size={16} /> GitHub
                 </Button>
-                <Button href={profile.contact.linkedin} variant="outline" tone={dark ? "dark" : "light"} className="min-w-[140px]">
+                <Button
+                  href={profile.contact.linkedin}
+                  variant="outline"
+                  tone={dark ? "dark" : "light"}
+                  className="min-w-[140px]"
+                >
                   <Linkedin size={16} /> LinkedIn
                 </Button>
-                <Button href={`mailto:${profile.contact.email}`} variant="outline" tone={dark ? "dark" : "light"} className="min-w-[140px]">
+                <Button
+                  href={`mailto:${profile.contact.email}`}
+                  variant="outline"
+                  tone={dark ? "dark" : "light"}
+                  className="min-w-[140px]"
+                >
                   <Mail size={16} /> {t.hero.contact}
                 </Button>
               </div>
 
               {/* Mobile CTAs */}
               <div className="flex sm:hidden w-full max-w-sm mx-auto gap-3">
-                <Button variant="primary" tone={dark ? "dark" : "light"} onClick={() => scrollTo("projects")} className="flex-1">
+                <Button
+                  variant="primary"
+                  tone={dark ? "dark" : "light"}
+                  onClick={() => scrollTo("projects")}
+                  className="flex-1"
+                >
                   {t.hero.projects}
                   <motion.span
                     aria-hidden
                     animate={reduceMotion ? undefined : { y: [0, 4, 0] }}
-                    transition={reduceMotion ? undefined : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
+                    transition={
+                      reduceMotion
+                        ? undefined
+                        : {
+                            duration: 1.1,
+                            repeat: Infinity,
+                            ease: [0.4, 0, 0.2, 1],
+                          }
+                    }
                     className="inline-flex"
                   >
                     <ChevronDown size={16} />
                   </motion.span>
                 </Button>
-
-                <Button href={`mailto:${profile.contact.email}`} variant="outline" tone={dark ? "dark" : "light"} className="flex-1">
+                <Button
+                  href={`mailto:${profile.contact.email}`}
+                  variant="outline"
+                  tone={dark ? "dark" : "light"}
+                  className="flex-1"
+                >
                   <Mail size={16} /> {t.hero.contact}
                 </Button>
               </div>
             </motion.div>
 
             {/* Download CV (dropdown) */}
-            <motion.div variants={fadeUp} className="relative mt-4 flex justify-center" ref={cvRef}>
-              <Button variant="outline" tone={dark ? "dark" : "light"} onClick={() => setCvOpen((v) => !v)} className="min-w-[160px]">
+            <motion.div variants={reveal} className="relative mt-4 flex justify-center" ref={cvRef}>
+              <Button
+                variant="outline"
+                tone={dark ? "dark" : "light"}
+                onClick={() => setCvOpen((v) => !v)}
+                className="min-w-[160px]"
+              >
                 {t.hero.downloadCV}
                 <motion.span
                   aria-hidden
@@ -643,17 +766,21 @@ export default function Portfolio() {
                     reduceMotion
                       ? undefined
                       : {
-                        rotate: cvOpen ? 180 : 0,
-                        y: cvOpen ? 0 : [0, 4, 0],
-                      }
+                          rotate: cvOpen ? 180 : 0,
+                          y: cvOpen ? 0 : [0, 4, 0],
+                        }
                   }
                   transition={
                     reduceMotion
                       ? undefined
                       : {
-                        rotate: { duration: 0.18 },
-                        y: { duration: 1.2, repeat: cvOpen ? 0 : Infinity, ease: [0.4, 0, 0.2, 1] },
-                      }
+                          rotate: { duration: 0.18 },
+                          y: {
+                            duration: 1.2,
+                            repeat: cvOpen ? 0 : Infinity,
+                            ease: [0.4, 0, 0.2, 1],
+                          },
+                        }
                   }
                   className="inline-flex"
                 >
@@ -673,18 +800,28 @@ export default function Portfolio() {
                   "absolute left-1/2 -translate-x-1/2 mt-2 w-52 rounded-2xl border overflow-hidden " +
                   "shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-md " +
                   "max-md:shadow-none max-md:backdrop-blur-0 " +
-                  (dark ? "border-white/10 bg-black/70" : "border-black/10 bg-white/90")
+                  (dark
+                    ? "border-white/10 bg-black/70"
+                    : "border-black/10 bg-white/90")
                 }
               >
                 <a
                   href="/Baxtiyar_Alizada_CV_EN.pdf"
                   target="_blank"
                   rel="noreferrer"
-                  className={"flex items-center justify-between px-4 py-3 text-sm transition " + (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")}
+                  className={
+                    "flex items-center justify-between px-4 py-3 text-sm transition " +
+                    (dark
+                      ? "text-white/90 hover:bg-white/10"
+                      : "text-black/80 hover:bg-black/5")
+                  }
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (EN)</span>
-                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
+                  <ArrowRight
+                    size={16}
+                    className={dark ? "text-white/60" : "text-black/50"}
+                  />
                 </a>
 
                 <div className={dark ? "h-px bg-white/10" : "h-px bg-black/10"} />
@@ -693,11 +830,19 @@ export default function Portfolio() {
                   href="/Baxtiyar_Alizada_CV_AZ.pdf"
                   target="_blank"
                   rel="noreferrer"
-                  className={"flex items-center justify-between px-4 py-3 text-sm transition " + (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")}
+                  className={
+                    "flex items-center justify-between px-4 py-3 text-sm transition " +
+                    (dark
+                      ? "text-white/90 hover:bg-white/10"
+                      : "text-black/80 hover:bg-black/5")
+                  }
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (AZ)</span>
-                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
+                  <ArrowRight
+                    size={16}
+                    className={dark ? "text-white/60" : "text-black/50"}
+                  />
                 </a>
               </motion.div>
             </motion.div>
@@ -707,18 +852,25 @@ export default function Portfolio() {
         {/* ABOUT (scroll reveal + stagger) */}
         <motion.section
           id="about"
+          variants={stagger}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
-          variants={stagger}
           className="py-20"
         >
-          <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
-            <SectionTitle title={t.about.title} subtitle={t.about.subtitle} subtitleClass={muted} />
+          <motion.div variants={reveal}>
+            <SectionTitle
+              title={t.about.title}
+              subtitle={t.about.subtitle}
+              subtitleClass={muted}
+            />
           </motion.div>
 
-          <motion.div variants={fadeUp} className="mt-6 mb-10 flex flex-wrap items-center justify-center gap-2">
-            {t.about.focus.map((f) => (
+          <motion.div
+            variants={reveal}
+            className="mt-6 mb-10 flex flex-wrap items-center justify-center gap-2"
+          >
+            {profile.focus.map((f) => (
               <Pill tone={dark ? "dark" : "light"} key={f}>
                 {f}
               </Pill>
@@ -726,42 +878,58 @@ export default function Portfolio() {
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            <motion.div variants={fadeUp} className="lg:col-span-2" style={{ willChange: "transform, opacity" }}>
+            <motion.div variants={reveal} className="lg:col-span-2">
               <Card className="p-6">
-                <p className={"text-sm leading-relaxed " + muted}>{t.about.aboutText}</p>
+                <p className={"text-sm leading-relaxed " + muted}>
+                  {profile.about}
+                </p>
 
                 <motion.div
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, amount: 0.25 }}
-                  variants={makeStagger(!!reduceMotion, 0.04, 0.06)}
+                  variants={stagger}
                   className="mt-6 grid sm:grid-cols-2 gap-4"
                 >
                   {[
-                    { key: "clean", ...t.about.cards.clean },
-                    { key: "ui", ...t.about.cards.ui },
-                    { key: "user", ...t.about.cards.user },
-                    { key: "perf", ...t.about.cards.perf },
-                  ].map((c) => (
+                    {
+                      title: "Clean Code",
+                      text: t.about.cards.clean,
+                    },
+                    {
+                      title: "Modern UI/UX",
+                      text: t.about.cards.ui,
+                    },
+                    {
+                      title: "User-Centered",
+                      text: t.about.cards.user,
+                    },
+                    {
+                      title: "Performance",
+                      text: t.about.cards.perf,
+                    },
+                  ].map((item) => (
                     <motion.div
-                      key={c.key}
-                      variants={makeFadeUp(!!reduceMotion, 14)}
-                      className={"rounded-xl border p-4 " + (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")}
-                      style={{ willChange: "transform, opacity" }}
+                      key={item.title}
+                      variants={reveal}
+                      className={
+                        "rounded-xl border p-4 " +
+                        (dark
+                          ? "border-white/10 bg-black/30"
+                          : "border-black/10 bg-white")
+                      }
                     >
-                      <div className="text-sm font-medium">{c.title}</div>
-                      <div className={"mt-1 text-xs " + muted}>{c.desc}</div>
+                      <div className="text-sm font-medium">{item.title}</div>
+                      <div className={"mt-1 text-xs " + muted}>{item.text}</div>
                     </motion.div>
                   ))}
                 </motion.div>
               </Card>
             </motion.div>
 
-            <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
+            <motion.div variants={reveal}>
               <Card className="p-6">
                 <div className="text-sm font-medium">{t.about.journeyTitle}</div>
-                <p className={"mt-2 text-sm leading-relaxed " + muted}>{t.about.journeyText}</p>
-
+                <p className={"mt-2 text-sm leading-relaxed " + muted}>
+                  {t.about.journeyText}
+                </p>
                 <div className="mt-5 grid gap-3">
                   <div className={"flex items-center gap-2 text-sm " + muted}>
                     <MapPin size={16} /> {profile.contact.location}
@@ -778,132 +946,136 @@ export default function Portfolio() {
           </div>
         </motion.section>
 
-        {/* SKILLS (scroll reveal + stagger lists) */}
+        {/* SKILLS (bars animate in view) */}
         <motion.section
           id="skills"
+          variants={stagger}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
-          variants={stagger}
           className="py-20"
         >
-          <motion.div variants={fadeUp}>
-            <SectionTitle title={t.skills.title} subtitle={t.skills.subtitle} subtitleClass={muted} />
+          <motion.div variants={reveal}>
+            <SectionTitle
+              title={t.skills.title}
+              subtitle={t.skills.subtitle}
+              subtitleClass={muted}
+            />
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            <motion.div variants={fadeUp} className="lg:col-span-2" style={{ willChange: "transform, opacity" }}>
+            <motion.div variants={reveal} className="lg:col-span-2">
               <Card className="p-6">
                 <div className="text-sm font-medium mb-4">{t.skills.core}</div>
 
-                <motion.div
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, amount: 0.25 }}
-                  variants={makeStagger(!!reduceMotion, 0.04, 0.06)}
-                  className="grid gap-4"
-                >
+                <div className="grid gap-4">
                   {skills.map((s) => (
-                    <motion.div key={s.name} variants={makeFadeUp(!!reduceMotion, 12)} style={{ willChange: "transform, opacity" }}>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className={dark ? "text-white" : "text-black"}>{s.name}</span>
-                        <span className={muted}>{s.level}%</span>
-                      </div>
-                      <div className={"mt-2 h-2 rounded-full overflow-hidden " + (dark ? "bg-white/10" : "bg-black/10")}>
-                        <div
-                          className={"h-full rounded-full " + (dark ? "bg-white" : "bg-black")}
-                          style={{ width: `${s.level}%` }}
-                        />
-                      </div>
-                    </motion.div>
+                    <SkillRow
+                      key={s.name}
+                      name={s.name}
+                      level={s.level}
+                      dark={dark}
+                      muted={muted}
+                      reduceMotion={!!reduceMotion}
+                    />
                   ))}
-                </motion.div>
+                </div>
               </Card>
             </motion.div>
 
-            <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
+            <motion.div variants={reveal}>
               <Card className="p-6">
                 <div className="text-sm font-medium mb-4">{t.skills.stack}</div>
-
-                <motion.div
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, amount: 0.25 }}
-                  variants={makeStagger(!!reduceMotion, 0.02, 0.03)}
-                  className="flex flex-wrap gap-2"
-                >
-                  {techTags.map((tt) => (
-                    <motion.span
-                      key={tt}
-                      variants={makeFadeUp(!!reduceMotion, 10)}
+                <div className="flex flex-wrap gap-2">
+                  {techTags.map((tag) => (
+                    <span
+                      key={tag}
                       className={
                         "text-xs rounded-full border px-3 py-1 " +
-                        (dark ? "border-white/10 bg-black/30 text-white/80" : "border-black/10 bg-white text-black/70")
+                        (dark
+                          ? "border-white/10 bg-black/30 text-white/80"
+                          : "border-black/10 bg-white text-black/70")
                       }
-                      style={{ willChange: "transform, opacity" }}
                     >
-                      {tt}
-                    </motion.span>
+                      {tag}
+                    </span>
                   ))}
-                </motion.div>
+                </div>
 
-                <motion.div variants={makeFadeUp(!!reduceMotion, 14)} className={"mt-6 rounded-2xl border p-5 text-center " + (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")}>
+                <div
+                  className={
+                    "mt-6 rounded-2xl border p-5 text-center " +
+                    (dark
+                      ? "border-white/10 bg-black/30"
+                      : "border-black/10 bg-white")
+                  }
+                >
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <div className="text-2xl font-semibold">Junior</div>
-                      <div className={"text-xs mt-1 " + muted}>{t.skills.stats.level}</div>
+                      <div className={"text-xs mt-1 " + muted}>
+                        {t.skills.stat1}
+                      </div>
                     </div>
                     <div>
                       <div className="text-2xl font-semibold">4+</div>
-                      <div className={"text-xs mt-1 " + muted}>{t.skills.stats.projects}</div>
+                      <div className={"text-xs mt-1 " + muted}>
+                        {t.skills.stat2}
+                      </div>
                     </div>
                     <div>
                       <div className="text-2xl font-semibold">100%</div>
-                      <div className={"text-xs mt-1 " + muted}>{t.skills.stats.learning}</div>
+                      <div className={"text-xs mt-1 " + muted}>
+                        {t.skills.stat3}
+                      </div>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               </Card>
             </motion.div>
           </div>
         </motion.section>
 
-        {/* PROJECTS (scroll reveal + stagger cards) */}
+        {/* PROJECTS (scroll reveal stagger cards) */}
         <motion.section
           id="projects"
+          variants={stagger}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
-          variants={stagger}
           className="py-20"
         >
-          <motion.div variants={fadeUp}>
-            <SectionTitle title={t.projects.title} subtitle={t.projects.subtitle} subtitleClass={muted} />
+          <motion.div variants={reveal}>
+            <SectionTitle
+              title={t.projects.title}
+              subtitle={t.projects.subtitle}
+              subtitleClass={muted}
+            />
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.25 }}
-            variants={makeStagger(!!reduceMotion, 0.06, 0.08)}
-            className="grid md:grid-cols-2 gap-6"
-          >
+          <motion.div variants={stagger} className="grid md:grid-cols-2 gap-6">
             {projects.map((p) => (
               <motion.div
                 key={p.title}
-                variants={makeFadeUp(!!reduceMotion, 16)}
-                whileHover={reduceMotion ? undefined : { y: -4 }}
+                variants={reveal}
+                // hover only desktop; reduceMotion -> off
+                whileHover={
+                  reduceMotion ? undefined : { y: -4 }
+                }
                 transition={{ duration: 0.2 }}
-                style={{ willChange: "transform, opacity" }}
               >
                 <Card className="p-6 h-full">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-lg font-semibold tracking-tight">{p.title}</h3>
+                    <h3 className="text-lg font-semibold tracking-tight">
+                      {p.title}
+                    </h3>
                     {p.status ? (
                       <span
                         className={
                           "text-[11px] rounded-full px-2.5 py-1 border " +
-                          (dark ? "border-white/10 bg-white/5 text-white/80" : "border-black/10 bg-black/5 text-black/70")
+                          (dark
+                            ? "border-white/10 bg-white/5 text-white/80"
+                            : "border-black/10 bg-black/5 text-black/70")
                         }
                       >
                         {p.status}
@@ -911,23 +1083,33 @@ export default function Portfolio() {
                     ) : null}
                   </div>
 
-                  <p className={"mt-2 text-sm leading-relaxed " + muted}>{p.description}</p>
+                  <p className={"mt-2 text-sm leading-relaxed " + muted}>
+                    {p.description}
+                  </p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {p.tech.map((tt) => (
-                      <Pill tone={dark ? "dark" : "light"} key={tt}>
-                        {tt}
+                    {p.tech.map((tech) => (
+                      <Pill tone={dark ? "dark" : "light"} key={tech}>
+                        {tech}
                       </Pill>
                     ))}
                   </div>
 
                   <div className="mt-6">
                     {p.link ? (
-                      <Button href={p.link} variant="outline" tone={dark ? "dark" : "light"}>
-                        <Github size={16} /> {t.projects.viewGitHub}
+                      <Button
+                        href={p.link}
+                        variant="outline"
+                        tone={dark ? "dark" : "light"}
+                      >
+                        <Github size={16} /> {t.projects.viewGithub}
                       </Button>
                     ) : (
-                      <Button variant="outline" tone={dark ? "dark" : "light"} onClick={() => scrollTo("contact")}>
+                      <Button
+                        variant="outline"
+                        tone={dark ? "dark" : "light"}
+                        onClick={() => scrollTo("contact")}
+                      >
                         <Mail size={16} /> {t.projects.askDetails}
                       </Button>
                     )}
@@ -941,25 +1123,31 @@ export default function Portfolio() {
         {/* CONTACT (scroll reveal) */}
         <motion.section
           id="contact"
+          variants={stagger}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
-          variants={stagger}
           className="py-20"
         >
-          <motion.div variants={fadeUp}>
-            <SectionTitle title={t.contact.title} subtitle={t.contact.subtitle} subtitleClass={muted} />
+          <motion.div variants={reveal}>
+            <SectionTitle
+              title={t.contact.title}
+              subtitle={t.contact.subtitle}
+              subtitleClass={muted}
+            />
           </motion.div>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
+            <motion.div variants={reveal}>
               <Card className="p-6">
                 <div className="text-sm font-medium">{t.contact.getInTouch}</div>
                 <div className="mt-5 grid gap-3">
                   <a
                     className={
                       "flex items-center justify-between rounded-xl border p-4 transition " +
-                      (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
+                      (dark
+                        ? "border-white/10 bg-black/30 hover:bg-white/5"
+                        : "border-black/10 bg-white hover:bg-black/5")
                     }
                     href={`mailto:${profile.contact.email}`}
                   >
@@ -972,7 +1160,9 @@ export default function Portfolio() {
                   <a
                     className={
                       "flex items-center justify-between rounded-xl border p-4 transition " +
-                      (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
+                      (dark
+                        ? "border-white/10 bg-black/30 hover:bg-white/5"
+                        : "border-black/10 bg-white hover:bg-black/5")
                     }
                     href={profile.contact.github}
                     target="_blank"
@@ -987,7 +1177,9 @@ export default function Portfolio() {
                   <a
                     className={
                       "flex items-center justify-between rounded-xl border p-4 transition " +
-                      (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
+                      (dark
+                        ? "border-white/10 bg-black/30 hover:bg-white/5"
+                        : "border-black/10 bg-white hover:bg-black/5")
                     }
                     href={profile.contact.linkedin}
                     target="_blank"
@@ -1006,10 +1198,9 @@ export default function Portfolio() {
               </Card>
             </motion.div>
 
-            <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
+            <motion.div variants={reveal}>
               <Card className="p-6">
                 <div className="text-sm font-medium">{t.contact.sendMsg}</div>
-
                 <form
                   className="mt-5 grid gap-3"
                   onSubmit={(e) => {
@@ -1046,11 +1237,16 @@ export default function Portfolio() {
                     }
                     placeholder={t.contact.form.message}
                   />
-                  <Button variant="primary" tone={dark ? "dark" : "light"} className="justify-center">
+                  <Button
+                    variant="primary"
+                    tone={dark ? "dark" : "light"}
+                    className="justify-center"
+                  >
                     {t.contact.form.send} <ArrowRight size={16} />
                   </Button>
-
-                  <p className={"text-[11px] leading-relaxed " + muted}>{t.contact.form.note}</p>
+                  <p className={"text-[11px] leading-relaxed " + muted}>
+                    {t.contact.form.note}
+                  </p>
                 </form>
               </Card>
             </motion.div>
@@ -1058,15 +1254,9 @@ export default function Portfolio() {
         </motion.section>
 
         {/* Footer */}
-        <motion.footer
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.4 }}
-          variants={makeFadeUp(!!reduceMotion, 10)}
-          className={"pt-10 text-center text-xs " + muted}
-        >
-          © {new Date().getFullYear()} {profile.name}. {t.footer}
-        </motion.footer>
+        <footer className={"pt-10 text-center text-xs " + muted}>
+          {t.footer(profile.name)}
+        </footer>
       </div>
     </div>
   );
