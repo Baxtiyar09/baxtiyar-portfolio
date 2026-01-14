@@ -747,20 +747,18 @@ export default function Portfolio() {
               >
                 <Card className="p-6 h-full cursor-pointer">
                   {p.cover ? (
-                    <div className={"mb-4 overflow-hidden rounded-xl border " + (dark ? "border-white/10 bg-black/20" : "border-black/10 bg-black/5")}>
-                      <div className="relative h-36 w-full">
+                    <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                      <div className="relative h-44 w-full">
                         <img
                           src={p.cover}
                           alt={`${p.title} cover`}
-                          className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03] opacity-90 saturate-90"
+                          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                           loading="lazy"
                         />
-
-                        {/* overlay (portfolio vibe) */}
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
+                        {/* dark gradient overlay for better text balance */}
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
                       </div>
                     </div>
-
                   ) : null}
 
                   {/* SƏNİN HAZIRKI CONTENTİN BURDAN AŞAĞI QALSIN */}
