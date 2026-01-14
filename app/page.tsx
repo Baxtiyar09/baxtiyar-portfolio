@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Phone,
   MapPin,
+  Languages,
 } from "lucide-react";
 
 type Project = {
@@ -21,6 +22,8 @@ type Project = {
   link?: string;
   status?: "Live" | "In progress" | "Coming soon";
 };
+
+type Lang = "en" | "az";
 
 const fadeUp = {
   initial: { opacity: 0, y: 26 },
@@ -38,14 +41,9 @@ const SectionTitle = ({
   subtitleClass?: string;
 }) => (
   <div className="text-center mb-10">
-    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-      {title}
-    </h2>
+    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">{title}</h2>
     {subtitle ? (
-      <p
-        className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${subtitleClass ?? "text-white/60"
-          }`}
-      >
+      <p className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${subtitleClass ?? "text-white/60"}`}>
         {subtitle}
       </p>
     ) : null}
@@ -151,9 +149,7 @@ function useActiveSection(ids: string[]) {
       (entries) => {
         const visible = entries
           .filter((e) => e.isIntersecting)
-          .sort(
-            (a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0)
-          );
+          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0));
         if (visible[0]?.target?.id) setActive(visible[0].target.id);
       },
       { root: null, threshold: [0.2, 0.35, 0.5], rootMargin: "-20% 0px -60% 0px" }
@@ -167,9 +163,10 @@ function useActiveSection(ids: string[]) {
 }
 
 export default function Portfolio() {
-  const reduceMotion = useReducedMotion(); // performans + accessibility
+  const reduceMotion = useReducedMotion();
 
   const [dark, setDark] = useState(true);
+  const [lang, setLang] = useState<Lang>("en"); // ✅ default EN
 
   const [cvOpen, setCvOpen] = useState(false);
   const cvRef = useRef<HTMLDivElement | null>(null);
@@ -183,20 +180,146 @@ export default function Portfolio() {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
+  // ✅ TEXT DICTIONARY
+  const dict = useMemo(
+    () => ({
+      en: {
+        nav: { home: "Home", about: "About", skills: "Skills", projects: "Projects", contact: "Contact" },
+        hero: {
+          title: "Junior Android Developer",
+          headline:
+            "I build user-friendly, high-performance, and reliable mobile apps using modern Android technologies.",
+          viewWork: "View My Work",
+          projects: "Projects",
+          contact: "Contact",
+          downloadCV: "Download CV",
+          tooltip: "Scroll to projects",
+        },
+        about: {
+          title: "About Me",
+          subtitle: "I focus on clean code, stable architecture, and great UX.",
+          aboutText:
+            "I'm a Junior Android Developer who is curious about new technologies, eager to learn, and effective in a team. I keep improving by applying my skills in real projects. My goal is to create reliable, high-quality, and easy-to-use mobile applications that deliver value.",
+          focus: [
+            "MVVM & Clean Architecture",
+            "Asynchronous programming (Coroutines, Flow)",
+            "REST API integration",
+            "Working with new technologies",
+          ],
+          cards: {
+            clean: { title: "Clean Code", desc: "Readable and maintainable code structure." },
+            ui: { title: "Modern UI/UX", desc: "Clean layouts and animations with a Material approach." },
+            user: { title: "User-Centered", desc: "Simple, clear, and comfortable user experience." },
+            perf: { title: "Performance", desc: "Optimized behavior and fast screens." },
+          },
+          journeyTitle: "My Journey",
+          journeyText:
+            "I strengthen my skills by working on real Android projects and continuously learning new technologies.",
+        },
+        skills: {
+          title: "Skills & Technologies",
+          subtitle: "Key technologies I use to build Android applications.",
+          core: "Core Expertise",
+          stack: "Technology Stack",
+          stats: { level: "Level", projects: "Projects", learning: "Learning" },
+        },
+        projects: {
+          title: "Featured Projects",
+          subtitle: "Selected projects where I applied what I learned in practice.",
+          viewGitHub: "View on GitHub",
+          askDetails: "Ask for details",
+        },
+        contact: {
+          title: "Let's Work Together",
+          subtitle: "Have an idea? Let's talk and create something valuable together.",
+          getInTouch: "Get in Touch",
+          sendMsg: "Send a Message",
+          phoneLabel: "Phone",
+          form: {
+            name: "Your Name",
+            email: "Your Email",
+            message: "Your Message",
+            send: "Send Message",
+            note: "* This form is a demo. Later we can add real sending via EmailJS or a backend.",
+            alert: "Message sent (demo). You can also reach me by email.",
+          },
+        },
+        footer: "Built with Next.js, Tailwind CSS & Framer Motion.",
+        a11y: { theme: "Toggle theme", lang: "Toggle language" },
+      },
+      az: {
+        nav: { home: "Əsas", about: "Haqqımda", skills: "Bacarıqlar", projects: "Layihələr", contact: "Əlaqə" },
+        hero: {
+          title: "Junior Android Developer",
+          headline:
+            "Müasir Android texnologiyalarından istifadə edərək istifadəçi dostu, performanslı və etibarlı mobil tətbiqlər hazırlayıram.",
+          viewWork: "İşlərimə bax",
+          projects: "Layihələr",
+          contact: "Əlaqə",
+          downloadCV: "CV Yüklə",
+          tooltip: "Layihələr bölməsinə keç",
+        },
+        about: {
+          title: "Haqqımda",
+          subtitle: "Səliqəli kod, stabil arxitektura və yaxşı UX üzərində fokuslanıram.",
+          aboutText:
+            "Yeni texnologiyalara açıq, öyrənməyə maraqlı və komandada effektiv işləyən Junior Android Developerəm. Bilik və bacarıqlarımı real layihələrdə tətbiq edərək daim inkişaf etməyə çalışıram. Məqsədim istifadəsi rahat, etibarlı və keyfiyyətli mobil tətbiqlər hazırlayaraq dəyər yaratmaqdır.",
+          focus: [
+            "MVVM & Clean Architecture",
+            "Asinxron proqramlaşdırma (Coroutines, Flow)",
+            "REST API inteqrasiyası",
+            "Yeni texnologiyalarla işləmək",
+          ],
+          cards: {
+            clean: { title: "Clean Code", desc: "Oxunaqlı və maintainable kod strukturu." },
+            ui: { title: "Modern UI/UX", desc: "Material yanaşma, səliqəli layout və animasiyalar." },
+            user: { title: "User-Centered", desc: "İstifadəçiyə rahat, sadə və aydın təcrübə." },
+            perf: { title: "Performance", desc: "Optimallaşdırılmış iş prinsipi və sürətli ekranlar." },
+          },
+          journeyTitle: "Mənim yolum",
+          journeyText:
+            "Android sahəsində real layihələr üzərində işləyərək biliklərimi praktikada möhkəmləndirirəm və daim yeni texnologiyalar öyrənirəm.",
+        },
+        skills: {
+          title: "Bacarıqlar və Texnologiyalar",
+          subtitle: "Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar.",
+          core: "Əsas bacarıqlar",
+          stack: "Texnologiya Stack-i",
+          stats: { level: "Səviyyə", projects: "Layihə", learning: "Öyrənmə" },
+        },
+        projects: {
+          title: "Seçilmiş Layihələr",
+          subtitle: "Öyrəndiklərimi praktikada tətbiq etdiyim seçilmiş layihələr.",
+          viewGitHub: "GitHub-da bax",
+          askDetails: "Ətraflı soruş",
+        },
+        contact: {
+          title: "Gəlin birlikdə işləyək",
+          subtitle: "Layihə ideyan var? Gəlin danışaq və birlikdə dəyər yaradaq.",
+          getInTouch: "Əlaqə",
+          sendMsg: "Mesaj yaz",
+          phoneLabel: "Telefon",
+          form: {
+            name: "Adınız",
+            email: "Email",
+            message: "Mesajınız",
+            send: "Göndər",
+            note: "* Bu form demo kimidir. Sonradan EmailJS və ya backend ilə real göndərmə əlavə edərik.",
+            alert: "Mesaj göndərildi (demo). Email ilə də yaza bilərsiniz.",
+          },
+        },
+        footer: "Next.js, Tailwind CSS və Framer Motion ilə hazırlanıb.",
+        a11y: { theme: "Tema dəyiş", lang: "Dili dəyiş" },
+      },
+    }),
+    []
+  );
+
+  const t = dict[lang];
+
   const profile = useMemo(
     () => ({
       name: "Baxtiyar Alizada",
-      title: "Junior Android Developer",
-      headline:
-        "Müasir Android texnologiyalarından istifadə edərək istifadəçi dostu, performanslı və etibarlı mobil tətbiqlər hazırlayıram.",
-      about:
-        "Yeni texnologiyalara açıq, öyrənməyə maraqlı və komandada effektiv işləyən Junior Android Developerəm. Bilik və bacarıqlarımı real layihələrdə tətbiq edərək daim inkişaf etməyə çalışıram. Məqsədim istifadəsi rahat, etibarlı və keyfiyyətli mobil tətbiqlər hazırlayaraq dəyər yaratmaqdır.",
-      focus: [
-        "MVVM & Clean Architecture",
-        "Asinxron proqramlaşdırma (Coroutines, Flow)",
-        "REST API inteqrasiyası",
-        "Yeni texnologiyalarla işləmək",
-      ],
       contact: {
         email: "baxtiyaralizada1@gmail.com",
         phone: "077 333 98 31",
@@ -248,7 +371,9 @@ export default function Portfolio() {
         title: "Mova",
         status: "Live",
         description:
-          "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
+          lang === "en"
+            ? "ATL Academy final project. An Android app made for movie lovers."
+            : "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
         tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
         link: "https://github.com/Baxtiyar09/moviesApp",
       },
@@ -256,42 +381,47 @@ export default function Portfolio() {
         title: "HeyatYolu",
         status: "In progress",
         description:
-          "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
+          lang === "en"
+            ? "A mobile platform that preserves memories of loved ones in digital form."
+            : "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
         tech: ["Kotlin", "MVVM", "Room", "Firebase"],
       },
       {
         title: "Herac",
         status: "Coming soon",
         description:
-          "Növbəti mərhələdə tam hazırlandıqdan sonra Google Play Store-da yayımlamaq planlaşdırılır.",
+          lang === "en"
+            ? "Planned to be published on Google Play Store after completion."
+            : "Növbəti mərhələdə tam hazırlandıqdan sonra Google Play Store-da yayımlamaq planlaşdırılır.",
         tech: ["Clean Architecture", "Performance", "Modern UI"],
       },
       {
         title: "Astrology App",
         status: "Coming soon",
         description:
-          "Bürclər haqqında məlumat verən və gündəlik/həftəlik proqnozlar təqdim edən platforma.",
+          lang === "en"
+            ? "A platform that provides zodiac information and daily/weekly predictions."
+            : "Bürclər haqqında məlumat verən və gündəlik/həftəlik proqnozlar təqdim edən platforma.",
         tech: ["REST API", "Kotlin", "Modern UI"],
       },
     ],
-    []
+    [lang]
   );
 
   const sections = useMemo(
     () => [
-      { id: "home", label: "Home" },
-      { id: "about", label: "About" },
-      { id: "skills", label: "Skills" },
-      { id: "projects", label: "Projects" },
-      { id: "contact", label: "Contact" },
+      { id: "home", label: t.nav.home },
+      { id: "about", label: t.nav.about },
+      { id: "skills", label: t.nav.skills },
+      { id: "projects", label: t.nav.projects },
+      { id: "contact", label: t.nav.contact },
     ],
-    []
+    [t]
   );
 
   const active = useActiveSection(sections.map((s) => s.id));
 
   const bg = dark ? "bg-[#07080a] text-white" : "bg-white text-[#0b0d12]";
-
   const muted = dark ? "text-white/60" : "text-black/55";
   const navBg = dark ? "bg-black/50" : "bg-white/70";
   const border = dark ? "border-white/10" : "border-black/10";
@@ -301,9 +431,15 @@ export default function Portfolio() {
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const iconBtn =
+    "h-9 w-9 grid place-items-center rounded-xl border transition " +
+    (dark
+      ? "border-white/10 bg-white/5 hover:bg-white/10"
+      : "border-black/10 bg-black/5 hover:bg-black/10");
+
   return (
     <div className={`min-h-screen ${bg}`}>
-      {/* Ambient (MOBIL-də söndürülüb: max-md:hidden) */}
+      {/* Ambient (MOBIL-də söndürülüb) */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden max-md:hidden">
         <div
           className={
@@ -319,15 +455,10 @@ export default function Portfolio() {
         />
       </div>
 
-      {/* Navbar (MOBIL-də backdrop blur söndürülüb) */}
-      <div
-        className={`fixed top-0 left-0 right-0 z-50 ${navBg} border-b ${border} backdrop-blur-md max-md:backdrop-blur-0`}
-      >
+      {/* Navbar (MOBIL-də blur söndürülüb) */}
+      <div className={`fixed top-0 left-0 right-0 z-50 ${navBg} border-b ${border} backdrop-blur-md max-md:backdrop-blur-0`}>
         <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between">
-          <button
-            onClick={() => scrollTo("home")}
-            className="text-sm font-semibold tracking-wide"
-          >
+          <button onClick={() => scrollTo("home")} className="text-sm font-semibold tracking-wide">
             AndroidDev
           </button>
 
@@ -349,12 +480,7 @@ export default function Portfolio() {
                         : "text-black/55 hover:text-black")
                   }
                 >
-                  <span
-                    className={
-                      "px-2 py-1 rounded-lg " +
-                      (isActive ? (dark ? "bg-white/10" : "bg-black/5") : "")
-                    }
-                  >
+                  <span className={"px-2 py-1 rounded-lg " + (isActive ? (dark ? "bg-white/10" : "bg-black/5") : "")}>
                     {s.label}
                   </span>
                 </button>
@@ -363,16 +489,18 @@ export default function Portfolio() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {/* ✅ Language toggle */}
             <button
-              onClick={() => setDark((v) => !v)}
-              className={
-                "h-9 w-9 grid place-items-center rounded-xl border transition " +
-                (dark
-                  ? "border-white/10 bg-white/5 hover:bg-white/10"
-                  : "border-black/10 bg-black/5 hover:bg-black/10")
-              }
-              aria-label="Toggle theme"
+              onClick={() => setLang((p) => (p === "en" ? "az" : "en"))}
+              className={iconBtn}
+              aria-label={t.a11y.lang}
+              title={lang === "en" ? "AZ" : "EN"}
             >
+              <Languages size={16} />
+            </button>
+
+            {/* Theme toggle */}
+            <button onClick={() => setDark((v) => !v)} className={iconBtn} aria-label={t.a11y.theme}>
               {dark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
           </div>
@@ -389,40 +517,25 @@ export default function Portfolio() {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="text-center max-w-3xl"
           >
-            <p className={"text-xs uppercase tracking-[0.25em] " + muted}>
-              {profile.title}
-            </p>
-            <h1 className="mt-3 text-4xl md:text-6xl font-semibold tracking-tight">
-              {profile.name}
-            </h1>
-            <p className={"mt-5 text-sm md:text-base leading-relaxed " + muted}>
-              {profile.headline}
-            </p>
+            <p className={"text-xs uppercase tracking-[0.25em] " + muted}>{t.hero.title}</p>
+
+            <h1 className="mt-3 text-4xl md:text-6xl font-semibold tracking-tight">{profile.name}</h1>
+
+            <p className={"mt-5 text-sm md:text-base leading-relaxed " + muted}>{t.hero.headline}</p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               {/* Desktop / Tablet CTAs */}
               <div className="hidden sm:flex flex-wrap items-center justify-center gap-3">
                 <div className="relative group">
-                  <Button
-                    variant="primary"
-                    tone={dark ? "dark" : "light"}
-                    onClick={() => scrollTo("projects")}
-                    className="min-w-[160px]"
-                  >
-                    View My Work
+                  <Button variant="primary" tone={dark ? "dark" : "light"} onClick={() => scrollTo("projects")} className="min-w-[160px]">
+                    {t.hero.viewWork}
                     <motion.span
                       aria-hidden
-                      animate={
-                        reduceMotion ? undefined : { y: [0, 4, 0] }
-                      }
+                      animate={reduceMotion ? undefined : { y: [0, 4, 0] }}
                       transition={
                         reduceMotion
                           ? undefined
-                          : {
-                            duration: 1.1,
-                            repeat: Infinity,
-                            ease: [0.4, 0, 0.2, 1],
-                          }
+                          : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }
                       }
                       className="inline-flex"
                     >
@@ -433,89 +546,52 @@ export default function Portfolio() {
                   <div
                     className={
                       "pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 rounded-lg border px-3 py-1 text-[11px] opacity-0 translate-y-1 transition group-hover:opacity-100 group-hover:translate-y-0 " +
-                      (dark
-                        ? "border-white/10 bg-black/70 text-white/80"
-                        : "border-black/10 bg-white/90 text-black/70")
+                      (dark ? "border-white/10 bg-black/70 text-white/80" : "border-black/10 bg-white/90 text-black/70")
                     }
                   >
-                    Scroll to projects
+                    {t.hero.tooltip}
                   </div>
                 </div>
 
-                <Button
-                  href={profile.contact.github}
-                  variant="outline"
-                  tone={dark ? "dark" : "light"}
-                  className="min-w-[140px]"
-                >
+                <Button href={profile.contact.github} variant="outline" tone={dark ? "dark" : "light"} className="min-w-[140px]">
                   <Github size={16} /> GitHub
                 </Button>
-                <Button
-                  href={profile.contact.linkedin}
-                  variant="outline"
-                  tone={dark ? "dark" : "light"}
-                  className="min-w-[140px]"
-                >
+                <Button href={profile.contact.linkedin} variant="outline" tone={dark ? "dark" : "light"} className="min-w-[140px]">
                   <Linkedin size={16} /> LinkedIn
                 </Button>
-                <Button
-                  href={`mailto:${profile.contact.email}`}
-                  variant="outline"
-                  tone={dark ? "dark" : "light"}
-                  className="min-w-[140px]"
-                >
-                  <Mail size={16} /> Contact
+                <Button href={`mailto:${profile.contact.email}`} variant="outline" tone={dark ? "dark" : "light"} className="min-w-[140px]">
+                  <Mail size={16} /> {t.hero.contact}
                 </Button>
               </div>
 
               {/* Mobile CTAs */}
               <div className="flex sm:hidden w-full max-w-sm mx-auto gap-3">
-                <Button
-                  variant="primary"
-                  tone={dark ? "dark" : "light"}
-                  onClick={() => scrollTo("projects")}
-                  className="flex-1"
-                >
-                  Projects
+                <Button variant="primary" tone={dark ? "dark" : "light"} onClick={() => scrollTo("projects")} className="flex-1">
+                  {t.hero.projects}
                   <motion.span
                     aria-hidden
-                    animate={
-                      reduceMotion ? undefined : { y: [0, 4, 0] }
-                    }
+                    animate={reduceMotion ? undefined : { y: [0, 4, 0] }}
                     transition={
                       reduceMotion
                         ? undefined
-                        : {
-                          duration: 1.1,
-                          repeat: Infinity,
-                          ease: [0.4, 0, 0.2, 1],
-                        }
+                        : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }
                     }
                     className="inline-flex"
                   >
                     <ChevronDown size={16} />
                   </motion.span>
                 </Button>
-                <Button
-                  href={`mailto:${profile.contact.email}`}
-                  variant="outline"
-                  tone={dark ? "dark" : "light"}
-                  className="flex-1"
-                >
-                  <Mail size={16} /> Contact
+
+                <Button href={`mailto:${profile.contact.email}`} variant="outline" tone={dark ? "dark" : "light"} className="flex-1">
+                  <Mail size={16} /> {t.hero.contact}
                 </Button>
               </div>
             </div>
 
             {/* Download CV (dropdown) */}
             <div className="relative mt-4 flex justify-center" ref={cvRef}>
-              <Button
-                variant="outline"
-                tone={dark ? "dark" : "light"}
-                onClick={() => setCvOpen((v) => !v)}
-                className="min-w-[160px]"
-              >
-                Download CV
+              <Button variant="outline" tone={dark ? "dark" : "light"} onClick={() => setCvOpen((v) => !v)} className="min-w-[160px]">
+                {t.hero.downloadCV}
                 <motion.span
                   aria-hidden
                   animate={
@@ -553,7 +629,6 @@ export default function Portfolio() {
                 }}
                 transition={{ duration: 0.18, ease: [0.2, 0.9, 0.2, 1] }}
                 className={
-                  // Mobil-də blur + heavy shadow söndürülüb
                   "absolute left-1/2 -translate-x-1/2 mt-2 w-52 rounded-2xl border overflow-hidden " +
                   "shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-md " +
                   "max-md:shadow-none max-md:backdrop-blur-0 " +
@@ -566,17 +641,12 @@ export default function Portfolio() {
                   rel="noreferrer"
                   className={
                     "flex items-center justify-between px-4 py-3 text-sm transition " +
-                    (dark
-                      ? "text-white/90 hover:bg-white/10"
-                      : "text-black/80 hover:bg-black/5")
+                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
                   }
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (EN)</span>
-                  <ArrowRight
-                    size={16}
-                    className={dark ? "text-white/60" : "text-black/50"}
-                  />
+                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
                 </a>
 
                 <div className={dark ? "h-px bg-white/10" : "h-px bg-black/10"} />
@@ -587,17 +657,12 @@ export default function Portfolio() {
                   rel="noreferrer"
                   className={
                     "flex items-center justify-between px-4 py-3 text-sm transition " +
-                    (dark
-                      ? "text-white/90 hover:bg-white/10"
-                      : "text-black/80 hover:bg-black/5")
+                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
                   }
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (AZ)</span>
-                  <ArrowRight
-                    size={16}
-                    className={dark ? "text-white/60" : "text-black/50"}
-                  />
+                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
                 </a>
               </motion.div>
             </div>
@@ -605,20 +670,11 @@ export default function Portfolio() {
         </section>
 
         {/* ABOUT */}
-        <motion.section
-          id="about"
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="py-20"
-        >
-          <SectionTitle
-            title="About Me"
-            subtitle="Səliqəli kod, stabil arxitektura və yaxşı UX üzərində fokuslanıram."
-            subtitleClass={muted}
-          />
+        <motion.section id="about" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="py-20">
+          <SectionTitle title={t.about.title} subtitle={t.about.subtitle} subtitleClass={muted} />
 
           <div className="mt-6 mb-10 flex flex-wrap items-center justify-center gap-2">
-            {profile.focus.map((f) => (
+            {t.about.focus.map((f) => (
               <Pill tone={dark ? "dark" : "light"} key={f}>
                 {f}
               </Pill>
@@ -627,39 +683,33 @@ export default function Portfolio() {
 
           <div className="grid lg:grid-cols-3 gap-6">
             <Card className="p-6 lg:col-span-2">
-              <p className={"text-sm leading-relaxed " + muted}>{profile.about}</p>
+              <p className={"text-sm leading-relaxed " + muted}>{t.about.aboutText}</p>
 
               <div className="mt-6 grid sm:grid-cols-2 gap-4">
-                {["Clean Code", "Modern UI/UX", "User-Centered", "Performance"].map(
-                  (t) => (
-                    <div
-                      key={t}
-                      className={
-                        "rounded-xl border p-4 " +
-                        (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
-                      }
-                    >
-                      <div className="text-sm font-medium">{t}</div>
-                      <div className={"mt-1 text-xs " + muted}>
-                        {t === "Clean Code" && "Oxunaqlı və maintainable kod strukturu."}
-                        {t === "Modern UI/UX" &&
-                          "Material yanaşma, səliqəli layout və animasiyalar."}
-                        {t === "User-Centered" && "İstifadəçiyə rahat, sadə və aydın təcrübə."}
-                        {t === "Performance" &&
-                          "Optimallaşdırılmış iş prinsipi və sürətli ekranlar."}
-                      </div>
-                    </div>
-                  )
-                )}
+                {[
+                  { key: "clean", ...t.about.cards.clean },
+                  { key: "ui", ...t.about.cards.ui },
+                  { key: "user", ...t.about.cards.user },
+                  { key: "perf", ...t.about.cards.perf },
+                ].map((c) => (
+                  <div
+                    key={c.key}
+                    className={
+                      "rounded-xl border p-4 " +
+                      (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
+                    }
+                  >
+                    <div className="text-sm font-medium">{c.title}</div>
+                    <div className={"mt-1 text-xs " + muted}>{c.desc}</div>
+                  </div>
+                ))}
               </div>
             </Card>
 
             <Card className="p-6">
-              <div className="text-sm font-medium">My Journey</div>
-              <p className={"mt-2 text-sm leading-relaxed " + muted}>
-                Android sahəsində real layihələr üzərində işləyərək biliklərimi
-                praktikada möhkəmləndirirəm və daim yeni texnologiyalar öyrənirəm.
-              </p>
+              <div className="text-sm font-medium">{t.about.journeyTitle}</div>
+              <p className={"mt-2 text-sm leading-relaxed " + muted}>{t.about.journeyText}</p>
+
               <div className="mt-5 grid gap-3">
                 <div className={"flex items-center gap-2 text-sm " + muted}>
                   <MapPin size={16} /> {profile.contact.location}
@@ -676,40 +726,21 @@ export default function Portfolio() {
         </motion.section>
 
         {/* SKILLS */}
-        <motion.section
-          id="skills"
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="py-20"
-        >
-          <SectionTitle
-            title="Skills & Technologies"
-            subtitle="Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar."
-            subtitleClass={muted}
-          />
+        <motion.section id="skills" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="py-20">
+          <SectionTitle title={t.skills.title} subtitle={t.skills.subtitle} subtitleClass={muted} />
 
           <div className="grid lg:grid-cols-3 gap-6">
             <Card className="p-6 lg:col-span-2">
-              <div className="text-sm font-medium mb-4">Core Expertise</div>
+              <div className="text-sm font-medium mb-4">{t.skills.core}</div>
               <div className="grid gap-4">
                 {skills.map((s) => (
                   <div key={s.name}>
                     <div className="flex items-center justify-between text-sm">
-                      <span className={dark ? "text-white" : "text-black"}>
-                        {s.name}
-                      </span>
+                      <span className={dark ? "text-white" : "text-black"}>{s.name}</span>
                       <span className={muted}>{s.level}%</span>
                     </div>
-                    <div
-                      className={
-                        "mt-2 h-2 rounded-full overflow-hidden " +
-                        (dark ? "bg-white/10" : "bg-black/10")
-                      }
-                    >
-                      <div
-                        className={"h-full rounded-full " + (dark ? "bg-white" : "bg-black")}
-                        style={{ width: `${s.level}%` }}
-                      />
+                    <div className={"mt-2 h-2 rounded-full overflow-hidden " + (dark ? "bg-white/10" : "bg-black/10")}>
+                      <div className={"h-full rounded-full " + (dark ? "bg-white" : "bg-black")} style={{ width: `${s.level}%` }} />
                     </div>
                   </div>
                 ))}
@@ -717,41 +748,34 @@ export default function Portfolio() {
             </Card>
 
             <Card className="p-6">
-              <div className="text-sm font-medium mb-4">Technology Stack</div>
+              <div className="text-sm font-medium mb-4">{t.skills.stack}</div>
               <div className="flex flex-wrap gap-2">
-                {techTags.map((t) => (
+                {techTags.map((tt) => (
                   <span
-                    key={t}
+                    key={tt}
                     className={
                       "text-xs rounded-full border px-3 py-1 " +
-                      (dark
-                        ? "border-white/10 bg-black/30 text-white/80"
-                        : "border-black/10 bg-white text-black/70")
+                      (dark ? "border-white/10 bg-black/30 text-white/80" : "border-black/10 bg-white text-black/70")
                     }
                   >
-                    {t}
+                    {tt}
                   </span>
                 ))}
               </div>
 
-              <div
-                className={
-                  "mt-6 rounded-2xl border p-5 text-center " +
-                  (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
-                }
-              >
+              <div className={"mt-6 rounded-2xl border p-5 text-center " + (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")}>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <div className="text-2xl font-semibold">Junior</div>
-                    <div className={"text-xs mt-1 " + muted}>Level</div>
+                    <div className={"text-xs mt-1 " + muted}>{t.skills.stats.level}</div>
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">4+</div>
-                    <div className={"text-xs mt-1 " + muted}>Projects</div>
+                    <div className={"text-xs mt-1 " + muted}>{t.skills.stats.projects}</div>
                   </div>
                   <div>
                     <div className="text-2xl font-semibold">100%</div>
-                    <div className={"text-xs mt-1 " + muted}>Learning</div>
+                    <div className={"text-xs mt-1 " + muted}>{t.skills.stats.learning}</div>
                   </div>
                 </div>
               </div>
@@ -760,23 +784,13 @@ export default function Portfolio() {
         </motion.section>
 
         {/* PROJECTS */}
-        <motion.section
-          id="projects"
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="py-20"
-        >
-          <SectionTitle
-            title="Featured Projects"
-            subtitle="Öyrəndiklərimi praktikada tətbiq etdiyim seçilmiş layihələr."
-            subtitleClass={muted}
-          />
+        <motion.section id="projects" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="py-20">
+          <SectionTitle title={t.projects.title} subtitle={t.projects.subtitle} subtitleClass={muted} />
 
           <div className="grid md:grid-cols-2 gap-6">
             {projects.map((p) => (
               <motion.div
                 key={p.title}
-                // Mobil + Reduce motion: hover animasiyası OFF
                 whileHover={reduceMotion ? undefined : { y: -4 }}
                 transition={{ duration: 0.2 }}
               >
@@ -787,9 +801,7 @@ export default function Portfolio() {
                       <span
                         className={
                           "text-[11px] rounded-full px-2.5 py-1 border " +
-                          (dark
-                            ? "border-white/10 bg-white/5 text-white/80"
-                            : "border-black/10 bg-black/5 text-black/70")
+                          (dark ? "border-white/10 bg-white/5 text-white/80" : "border-black/10 bg-black/5 text-black/70")
                         }
                       >
                         {p.status}
@@ -800,9 +812,9 @@ export default function Portfolio() {
                   <p className={"mt-2 text-sm leading-relaxed " + muted}>{p.description}</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {p.tech.map((t) => (
-                      <Pill tone={dark ? "dark" : "light"} key={t}>
-                        {t}
+                    {p.tech.map((tt) => (
+                      <Pill tone={dark ? "dark" : "light"} key={tt}>
+                        {tt}
                       </Pill>
                     ))}
                   </div>
@@ -810,15 +822,11 @@ export default function Portfolio() {
                   <div className="mt-6">
                     {p.link ? (
                       <Button href={p.link} variant="outline" tone={dark ? "dark" : "light"}>
-                        <Github size={16} /> View on GitHub
+                        <Github size={16} /> {t.projects.viewGitHub}
                       </Button>
                     ) : (
-                      <Button
-                        variant="outline"
-                        tone={dark ? "dark" : "light"}
-                        onClick={() => scrollTo("contact")}
-                      >
-                        <Mail size={16} /> Ask for details
+                      <Button variant="outline" tone={dark ? "dark" : "light"} onClick={() => scrollTo("contact")}>
+                        <Mail size={16} /> {t.projects.askDetails}
                       </Button>
                     )}
                   </div>
@@ -829,28 +837,17 @@ export default function Portfolio() {
         </motion.section>
 
         {/* CONTACT */}
-        <motion.section
-          id="contact"
-          {...fadeUp}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="py-20"
-        >
-          <SectionTitle
-            title="Let's Work Together"
-            subtitle="Layihə ideyan var? Gəlin danışaq və birlikdə dəyər yaradaq."
-            subtitleClass={muted}
-          />
+        <motion.section id="contact" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="py-20">
+          <SectionTitle title={t.contact.title} subtitle={t.contact.subtitle} subtitleClass={muted} />
 
           <div className="grid lg:grid-cols-2 gap-6">
             <Card className="p-6">
-              <div className="text-sm font-medium">Get in Touch</div>
+              <div className="text-sm font-medium">{t.contact.getInTouch}</div>
               <div className="mt-5 grid gap-3">
                 <a
                   className={
                     "flex items-center justify-between rounded-xl border p-4 transition " +
-                    (dark
-                      ? "border-white/10 bg-black/30 hover:bg-white/5"
-                      : "border-black/10 bg-white hover:bg-black/5")
+                    (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
                   }
                   href={`mailto:${profile.contact.email}`}
                 >
@@ -863,9 +860,7 @@ export default function Portfolio() {
                 <a
                   className={
                     "flex items-center justify-between rounded-xl border p-4 transition " +
-                    (dark
-                      ? "border-white/10 bg-black/30 hover:bg-white/5"
-                      : "border-black/10 bg-white hover:bg-black/5")
+                    (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
                   }
                   href={profile.contact.github}
                   target="_blank"
@@ -880,9 +875,7 @@ export default function Portfolio() {
                 <a
                   className={
                     "flex items-center justify-between rounded-xl border p-4 transition " +
-                    (dark
-                      ? "border-white/10 bg-black/30 hover:bg-white/5"
-                      : "border-black/10 bg-white hover:bg-black/5")
+                    (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
                   }
                   href={profile.contact.linkedin}
                   target="_blank"
@@ -895,16 +888,19 @@ export default function Portfolio() {
                 </a>
               </div>
 
-              <div className={"mt-6 text-xs " + muted}>Telefon: {profile.contact.phone}</div>
+              <div className={"mt-6 text-xs " + muted}>
+                {t.contact.phoneLabel}: {profile.contact.phone}
+              </div>
             </Card>
 
             <Card className="p-6">
-              <div className="text-sm font-medium">Send a Message</div>
+              <div className="text-sm font-medium">{t.contact.sendMsg}</div>
+
               <form
                 className="mt-5 grid gap-3"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  alert("Mesajınız göndərildi (demo). Email ilə də yaza bilərsiniz.");
+                  alert(t.contact.form.alert);
                 }}
               >
                 <input
@@ -914,7 +910,7 @@ export default function Portfolio() {
                       ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
                       : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
                   }
-                  placeholder="Your Name"
+                  placeholder={t.contact.form.name}
                 />
                 <input
                   type="email"
@@ -924,7 +920,7 @@ export default function Portfolio() {
                       ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
                       : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
                   }
-                  placeholder="Your Email"
+                  placeholder={t.contact.form.email}
                 />
                 <textarea
                   rows={4}
@@ -934,19 +930,13 @@ export default function Portfolio() {
                       ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
                       : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
                   }
-                  placeholder="Your Message"
+                  placeholder={t.contact.form.message}
                 />
-                <Button
-                  variant="primary"
-                  tone={dark ? "dark" : "light"}
-                  className="justify-center"
-                >
-                  Send Message <ArrowRight size={16} />
+                <Button variant="primary" tone={dark ? "dark" : "light"} className="justify-center">
+                  {t.contact.form.send} <ArrowRight size={16} />
                 </Button>
-                <p className={"text-[11px] leading-relaxed " + muted}>
-                  * Bu form demo kimidir. İstəsən sonradan EmailJS və ya backend ilə real
-                  göndərmə əlavə edərik.
-                </p>
+
+                <p className={"text-[11px] leading-relaxed " + muted}>{t.contact.form.note}</p>
               </form>
             </Card>
           </div>
@@ -954,8 +944,7 @@ export default function Portfolio() {
 
         {/* Footer */}
         <footer className={"pt-10 text-center text-xs " + muted}>
-          © {new Date().getFullYear()} {profile.name}. Built with Next.js, Tailwind
-          CSS & Framer Motion.
+          © {new Date().getFullYear()} {profile.name}. {t.footer}
         </footer>
       </div>
     </div>
