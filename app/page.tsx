@@ -21,11 +21,7 @@ type Project = {
   tech: string[];
   link?: string;
   status?: "Live" | "In progress" | "Coming soon";
-  cover?: string;
-  screenshots?: { src: string; label: string }[];
-  highlights?: string[];
 };
-
 
 const fadeUp = {
   initial: { opacity: 0, y: 26 },
@@ -162,9 +158,6 @@ function useActiveSection(ids: string[]) {
 
 export default function Portfolio() {
   const [dark, setDark] = useState(true);
-  const [openProject, setOpenProject] = useState<Project | null>(null);
-  const [shotIndex, setShotIndex] = useState(0);
-
 
   const [cvOpen, setCvOpen] = useState(false);
   const cvRef = useRef<HTMLDivElement | null>(null);
@@ -243,22 +236,17 @@ export default function Portfolio() {
       {
         title: "Mova",
         status: "Live",
-        description: "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
+        description:
+          "ATL Academy final layihəsi. Film həvəskarları üçün nəzərdə tutulmuş Android tətbiqi.",
         tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
         link: "https://github.com/Baxtiyar09/moviesApp",
-        cover: "public/projects/covers/mova.jpeg",
       },
       {
         title: "HeyatYolu",
         status: "In progress",
-        description: "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
+        description:
+          "Rəhmətə getmiş insanların xatirələrini rəqəmsal formada saxlayan mobil platforma.",
         tech: ["Kotlin", "MVVM", "Room", "Firebase"],
-        cover: "/projects/covers/heyatyolu.png",
-        highlights: [
-          "Rəhmətə getmiş insanların xatirələrinin toplanması",
-          "İstifadəçi dostu interfeys",
-          "Məlumatların təhlükəsiz saxlanması",
-        ],
       },
       {
         title: "Herac",
@@ -266,7 +254,6 @@ export default function Portfolio() {
         description:
           "Növbəti mərhələdə tam hazırlandıqdan sonra Google Play Store-da yayımlamaq planlaşdırılır.",
         tech: ["Clean Architecture", "Performance", "Modern UI"],
-        cover: "/projects/covers/herac.png",
       },
       {
         title: "Astrology App",
@@ -274,7 +261,6 @@ export default function Portfolio() {
         description:
           "Bürclər haqqında məlumat verən və gündəlik/həftəlik proqnozlar təqdim edən platforma.",
         tech: ["REST API", "Kotlin", "Modern UI"],
-        cover: "/projects/covers/astrology.png",
       },
     ],
     []
@@ -740,30 +726,14 @@ export default function Portfolio() {
             {projects.map((p) => (
               <motion.div
                 key={p.title}
-                whileHover={{ y: -6 }}
-                transition={{ type: "spring", stiffness: 260, damping: 18 }}
-                className="group"
-                onClick={() => { setOpenProject(p); setShotIndex(0); }}
+                whileHover={{ y: -4 }}
+                transition={{ duration: 0.2 }}
               >
-                <Card className="p-6 h-full cursor-pointer">
-                  {p.cover ? (
-                    <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-black/20">
-                      <div className="relative h-44 w-full">
-                        <img
-                          src={p.cover}
-                          alt={`${p.title} cover`}
-                          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                          loading="lazy"
-                        />
-                        {/* dark gradient overlay for better text balance */}
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {/* SƏNİN HAZIRKI CONTENTİN BURDAN AŞAĞI QALSIN */}
+                <Card className="p-6 h-full">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-lg font-semibold tracking-tight">{p.title}</h3>
+                    <h3 className="text-lg font-semibold tracking-tight">
+                      {p.title}
+                    </h3>
                     {p.status ? (
                       <span
                         className={
@@ -778,7 +748,9 @@ export default function Portfolio() {
                     ) : null}
                   </div>
 
-                  <p className={"mt-2 text-sm leading-relaxed " + muted}>{p.description}</p>
+                  <p className={"mt-2 text-sm leading-relaxed " + muted}>
+                    {p.description}
+                  </p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     {p.tech.map((t) => (
@@ -788,25 +760,21 @@ export default function Portfolio() {
                     ))}
                   </div>
 
-                  <div className="mt-6" onClick={(e) => e.stopPropagation()}>
+                  <div className="mt-6">
                     {p.link ? (
                       <Button href={p.link} variant="outline" tone={dark ? "dark" : "light"}>
                         <Github size={16} /> View on GitHub
                       </Button>
                     ) : (
-                      <Button
-                        variant="outline"
-                        tone={dark ? "dark" : "light"}
-                        onClick={() => scrollTo("contact")}
-                      >
+                      <Button variant="outline" tone={dark ? "dark" : "light"} onClick={() => scrollTo("contact")}>
                         <Mail size={16} /> Ask for details
                       </Button>
                     )}
                   </div>
+
                 </Card>
               </motion.div>
             ))}
-
           </div>
         </motion.section>
 
