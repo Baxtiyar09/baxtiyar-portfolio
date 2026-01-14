@@ -752,7 +752,7 @@ export default function Portfolio() {
                         <img
                           src={p.cover}
                           alt={`${p.title} cover`}
-                          className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                          className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03] opacity-90 saturate-90"
                           loading="lazy"
                         />
 
