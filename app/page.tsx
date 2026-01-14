@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useRef } from "react";
-import { motion } from "framer-motion";
-import { Download } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Github,
   Linkedin,
@@ -39,9 +38,14 @@ const SectionTitle = ({
   subtitleClass?: string;
 }) => (
   <div className="text-center mb-10">
-    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">{title}</h2>
+    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+      {title}
+    </h2>
     {subtitle ? (
-      <p className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${subtitleClass ?? "text-white/60"}`}>
+      <p
+        className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${subtitleClass ?? "text-white/60"
+          }`}
+      >
         {subtitle}
       </p>
     ) : null}
@@ -76,7 +80,10 @@ const Card = ({
 }) => (
   <div
     className={
-      "rounded-2xl border border-white/10 bg-white/5 shadow-[0_10px_40px_rgba(0,0,0,.35)] backdrop-blur-md " +
+      // Desktop: blur + shadow
+      // Mobile: blur OFF + shadow OFF (iOS performans üçün)
+      "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_10px_40px_rgba(0,0,0,.35)] " +
+      "max-md:backdrop-blur-0 max-md:shadow-none " +
       className
     }
   >
@@ -114,6 +121,7 @@ const Button = ({
   const isHashLink = typeof href === "string" && href.startsWith("#");
   const isExternal = typeof href === "string" && /^https?:\/\//.test(href);
   const Comp: any = href ? "a" : "button";
+
   return (
     <Comp
       href={href}
@@ -143,7 +151,9 @@ function useActiveSection(ids: string[]) {
       (entries) => {
         const visible = entries
           .filter((e) => e.isIntersecting)
-          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0));
+          .sort(
+            (a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0)
+          );
         if (visible[0]?.target?.id) setActive(visible[0].target.id);
       },
       { root: null, threshold: [0.2, 0.35, 0.5], rootMargin: "-20% 0px -60% 0px" }
@@ -157,6 +167,8 @@ function useActiveSection(ids: string[]) {
 }
 
 export default function Portfolio() {
+  const reduceMotion = useReducedMotion(); // performans + accessibility
+
   const [dark, setDark] = useState(true);
 
   const [cvOpen, setCvOpen] = useState(false);
@@ -170,7 +182,6 @@ export default function Portfolio() {
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
-
 
   const profile = useMemo(
     () => ({
@@ -279,9 +290,7 @@ export default function Portfolio() {
 
   const active = useActiveSection(sections.map((s) => s.id));
 
-  const bg = dark
-    ? "bg-[#07080a] text-white"
-    : "bg-white text-[#0b0d12]";
+  const bg = dark ? "bg-[#07080a] text-white" : "bg-white text-[#0b0d12]";
 
   const muted = dark ? "text-white/60" : "text-black/55";
   const navBg = dark ? "bg-black/50" : "bg-white/70";
@@ -294,8 +303,8 @@ export default function Portfolio() {
 
   return (
     <div className={`min-h-screen ${bg}`}>
-      {/* Ambient */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+      {/* Ambient (MOBIL-də söndürülüb: max-md:hidden) */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden max-md:hidden">
         <div
           className={
             "absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full blur-3xl opacity-30 " +
@@ -310,8 +319,10 @@ export default function Portfolio() {
         />
       </div>
 
-      {/* Navbar */}
-      <div className={`fixed top-0 left-0 right-0 z-50 ${navBg} backdrop-blur-md border-b ${border}`}>
+      {/* Navbar (MOBIL-də backdrop blur söndürülüb) */}
+      <div
+        className={`fixed top-0 left-0 right-0 z-50 ${navBg} border-b ${border} backdrop-blur-md max-md:backdrop-blur-0`}
+      >
         <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between">
           <button
             onClick={() => scrollTo("home")}
@@ -391,7 +402,6 @@ export default function Portfolio() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               {/* Desktop / Tablet CTAs */}
               <div className="hidden sm:flex flex-wrap items-center justify-center gap-3">
-                {/* View My Work (scroll) + tooltip + animated arrow */}
                 <div className="relative group">
                   <Button
                     variant="primary"
@@ -402,15 +412,24 @@ export default function Portfolio() {
                     View My Work
                     <motion.span
                       aria-hidden
-                      animate={{ y: [0, 4, 0] }}
-                      transition={{ duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
+                      animate={
+                        reduceMotion ? undefined : { y: [0, 4, 0] }
+                      }
+                      transition={
+                        reduceMotion
+                          ? undefined
+                          : {
+                            duration: 1.1,
+                            repeat: Infinity,
+                            ease: [0.4, 0, 0.2, 1],
+                          }
+                      }
                       className="inline-flex"
                     >
                       <ChevronDown size={16} />
                     </motion.span>
                   </Button>
 
-                  {/* Tooltip */}
                   <div
                     className={
                       "pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 rounded-lg border px-3 py-1 text-[11px] opacity-0 translate-y-1 transition group-hover:opacity-100 group-hover:translate-y-0 " +
@@ -449,7 +468,7 @@ export default function Portfolio() {
                 </Button>
               </div>
 
-              {/* Mobile CTAs (different) */}
+              {/* Mobile CTAs */}
               <div className="flex sm:hidden w-full max-w-sm mx-auto gap-3">
                 <Button
                   variant="primary"
@@ -460,8 +479,18 @@ export default function Portfolio() {
                   Projects
                   <motion.span
                     aria-hidden
-                    animate={{ y: [0, 4, 0] }}
-                    transition={{ duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
+                    animate={
+                      reduceMotion ? undefined : { y: [0, 4, 0] }
+                    }
+                    transition={
+                      reduceMotion
+                        ? undefined
+                        : {
+                          duration: 1.1,
+                          repeat: Infinity,
+                          ease: [0.4, 0, 0.2, 1],
+                        }
+                    }
                     className="inline-flex"
                   >
                     <ChevronDown size={16} />
@@ -489,24 +518,32 @@ export default function Portfolio() {
                 Download CV
                 <motion.span
                   aria-hidden
-                  animate={{
-                    rotate: cvOpen ? 180 : 0,
-                    y: cvOpen ? 0 : [0, 4, 0],
-                  }}
-                  transition={{
-                    rotate: { duration: 0.18 },
-                    y: {
-                      duration: 1.2,
-                      repeat: cvOpen ? 0 : Infinity,
-                      ease: [0.4, 0, 0.2, 1],
-                    },
-                  }}
+                  animate={
+                    reduceMotion
+                      ? undefined
+                      : {
+                        rotate: cvOpen ? 180 : 0,
+                        y: cvOpen ? 0 : [0, 4, 0],
+                      }
+                  }
+                  transition={
+                    reduceMotion
+                      ? undefined
+                      : {
+                        rotate: { duration: 0.18 },
+                        y: {
+                          duration: 1.2,
+                          repeat: cvOpen ? 0 : Infinity,
+                          ease: [0.4, 0, 0.2, 1],
+                        },
+                      }
+                  }
                   className="inline-flex"
                 >
                   <ChevronDown size={16} />
                 </motion.span>
-
               </Button>
+
               <motion.div
                 initial={false}
                 animate={cvOpen ? "open" : "closed"}
@@ -516,7 +553,10 @@ export default function Portfolio() {
                 }}
                 transition={{ duration: 0.18, ease: [0.2, 0.9, 0.2, 1] }}
                 className={
-                  "absolute left-1/2 -translate-x-1/2 mt-2 w-52 rounded-2xl border shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-md overflow-hidden " +
+                  // Mobil-də blur + heavy shadow söndürülüb
+                  "absolute left-1/2 -translate-x-1/2 mt-2 w-52 rounded-2xl border overflow-hidden " +
+                  "shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-md " +
+                  "max-md:shadow-none max-md:backdrop-blur-0 " +
                   (dark ? "border-white/10 bg-black/70" : "border-black/10 bg-white/90")
                 }
               >
@@ -526,12 +566,17 @@ export default function Portfolio() {
                   rel="noreferrer"
                   className={
                     "flex items-center justify-between px-4 py-3 text-sm transition " +
-                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
+                    (dark
+                      ? "text-white/90 hover:bg-white/10"
+                      : "text-black/80 hover:bg-black/5")
                   }
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (EN)</span>
-                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
+                  <ArrowRight
+                    size={16}
+                    className={dark ? "text-white/60" : "text-black/50"}
+                  />
                 </a>
 
                 <div className={dark ? "h-px bg-white/10" : "h-px bg-black/10"} />
@@ -542,23 +587,30 @@ export default function Portfolio() {
                   rel="noreferrer"
                   className={
                     "flex items-center justify-between px-4 py-3 text-sm transition " +
-                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
+                    (dark
+                      ? "text-white/90 hover:bg-white/10"
+                      : "text-black/80 hover:bg-black/5")
                   }
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (AZ)</span>
-                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
+                  <ArrowRight
+                    size={16}
+                    className={dark ? "text-white/60" : "text-black/50"}
+                  />
                 </a>
               </motion.div>
             </div>
-
           </motion.div>
         </section>
 
         {/* ABOUT */}
-        <motion.section id="about" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="py-20">
-
+        <motion.section
+          id="about"
+          {...fadeUp}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="py-20"
+        >
           <SectionTitle
             title="About Me"
             subtitle="Səliqəli kod, stabil arxitektura və yaxşı UX üzərində fokuslanıram."
@@ -573,7 +625,6 @@ export default function Portfolio() {
             ))}
           </div>
 
-
           <div className="grid lg:grid-cols-3 gap-6">
             <Card className="p-6 lg:col-span-2">
               <p className={"text-sm leading-relaxed " + muted}>{profile.about}</p>
@@ -585,19 +636,15 @@ export default function Portfolio() {
                       key={t}
                       className={
                         "rounded-xl border p-4 " +
-                        (dark
-                          ? "border-white/10 bg-black/30"
-                          : "border-black/10 bg-white")
+                        (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
                       }
                     >
                       <div className="text-sm font-medium">{t}</div>
                       <div className={"mt-1 text-xs " + muted}>
-                        {t === "Clean Code" &&
-                          "Oxunaqlı və maintainable kod strukturu."}
+                        {t === "Clean Code" && "Oxunaqlı və maintainable kod strukturu."}
                         {t === "Modern UI/UX" &&
                           "Material yanaşma, səliqəli layout və animasiyalar."}
-                        {t === "User-Centered" &&
-                          "İstifadəçiyə rahat, sadə və aydın təcrübə."}
+                        {t === "User-Centered" && "İstifadəçiyə rahat, sadə və aydın təcrübə."}
                         {t === "Performance" &&
                           "Optimallaşdırılmış iş prinsipi və sürətli ekranlar."}
                       </div>
@@ -629,8 +676,12 @@ export default function Portfolio() {
         </motion.section>
 
         {/* SKILLS */}
-        <motion.section id="skills" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="py-20">
+        <motion.section
+          id="skills"
+          {...fadeUp}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="py-20"
+        >
           <SectionTitle
             title="Skills & Technologies"
             subtitle="Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar."
@@ -656,10 +707,7 @@ export default function Portfolio() {
                       }
                     >
                       <div
-                        className={
-                          "h-full rounded-full " +
-                          (dark ? "bg-white" : "bg-black")
-                        }
+                        className={"h-full rounded-full " + (dark ? "bg-white" : "bg-black")}
                         style={{ width: `${s.level}%` }}
                       />
                     </div>
@@ -689,9 +737,7 @@ export default function Portfolio() {
               <div
                 className={
                   "mt-6 rounded-2xl border p-5 text-center " +
-                  (dark
-                    ? "border-white/10 bg-black/30"
-                    : "border-black/10 bg-white")
+                  (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
                 }
               >
                 <div className="grid grid-cols-3 gap-3">
@@ -714,8 +760,12 @@ export default function Portfolio() {
         </motion.section>
 
         {/* PROJECTS */}
-        <motion.section id="projects" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="py-20">
+        <motion.section
+          id="projects"
+          {...fadeUp}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="py-20"
+        >
           <SectionTitle
             title="Featured Projects"
             subtitle="Öyrəndiklərimi praktikada tətbiq etdiyim seçilmiş layihələr."
@@ -726,14 +776,13 @@ export default function Portfolio() {
             {projects.map((p) => (
               <motion.div
                 key={p.title}
-                whileHover={{ y: -4 }}
+                // Mobil + Reduce motion: hover animasiyası OFF
+                whileHover={reduceMotion ? undefined : { y: -4 }}
                 transition={{ duration: 0.2 }}
               >
                 <Card className="p-6 h-full">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-lg font-semibold tracking-tight">
-                      {p.title}
-                    </h3>
+                    <h3 className="text-lg font-semibold tracking-tight">{p.title}</h3>
                     {p.status ? (
                       <span
                         className={
@@ -748,9 +797,7 @@ export default function Portfolio() {
                     ) : null}
                   </div>
 
-                  <p className={"mt-2 text-sm leading-relaxed " + muted}>
-                    {p.description}
-                  </p>
+                  <p className={"mt-2 text-sm leading-relaxed " + muted}>{p.description}</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     {p.tech.map((t) => (
@@ -766,12 +813,15 @@ export default function Portfolio() {
                         <Github size={16} /> View on GitHub
                       </Button>
                     ) : (
-                      <Button variant="outline" tone={dark ? "dark" : "light"} onClick={() => scrollTo("contact")}>
+                      <Button
+                        variant="outline"
+                        tone={dark ? "dark" : "light"}
+                        onClick={() => scrollTo("contact")}
+                      >
                         <Mail size={16} /> Ask for details
                       </Button>
                     )}
                   </div>
-
                 </Card>
               </motion.div>
             ))}
@@ -779,8 +829,12 @@ export default function Portfolio() {
         </motion.section>
 
         {/* CONTACT */}
-        <motion.section id="contact" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="py-20">
+        <motion.section
+          id="contact"
+          {...fadeUp}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="py-20"
+        >
           <SectionTitle
             title="Let's Work Together"
             subtitle="Layihə ideyan var? Gəlin danışaq və birlikdə dəyər yaradaq."
@@ -841,9 +895,7 @@ export default function Portfolio() {
                 </a>
               </div>
 
-              <div className={"mt-6 text-xs " + muted}>
-                Telefon: {profile.contact.phone}
-              </div>
+              <div className={"mt-6 text-xs " + muted}>Telefon: {profile.contact.phone}</div>
             </Card>
 
             <Card className="p-6">
@@ -884,12 +936,16 @@ export default function Portfolio() {
                   }
                   placeholder="Your Message"
                 />
-                <Button variant="primary" tone={dark ? "dark" : "light"} className="justify-center">
+                <Button
+                  variant="primary"
+                  tone={dark ? "dark" : "light"}
+                  className="justify-center"
+                >
                   Send Message <ArrowRight size={16} />
                 </Button>
                 <p className={"text-[11px] leading-relaxed " + muted}>
-                  * Bu form demo kimidir. İstəsən sonradan EmailJS və ya backend ilə
-                  real göndərmə əlavə edərik.
+                  * Bu form demo kimidir. İstəsən sonradan EmailJS və ya backend ilə real
+                  göndərmə əlavə edərik.
                 </p>
               </form>
             </Card>
@@ -898,7 +954,8 @@ export default function Portfolio() {
 
         {/* Footer */}
         <footer className={"pt-10 text-center text-xs " + muted}>
-          © {new Date().getFullYear()} {profile.name}. Built with Next.js, Tailwind CSS & Framer Motion.
+          © {new Date().getFullYear()} {profile.name}. Built with Next.js, Tailwind
+          CSS & Framer Motion.
         </footer>
       </div>
     </div>
