@@ -25,11 +25,26 @@ type Project = {
 
 type Lang = "en" | "az";
 
-const fadeUp = {
-  initial: { opacity: 0, y: 26 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.2 },
-};
+// ---------- Motion helpers (iOS-friendly) ----------
+const easeOut = [0.16, 1, 0.3, 1] as const;
+
+const makeFadeUp = (reduce: boolean, y = 18) => ({
+  hidden: { opacity: 0, y: reduce ? 0 : y },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: reduce ? 0.01 : 0.55, ease: easeOut },
+  },
+});
+
+const makeStagger = (reduce: boolean, delayChildren = 0.06, stagger = 0.06) => ({
+  hidden: {},
+  show: {
+    transition: reduce
+      ? { duration: 0.01 }
+      : { delayChildren, staggerChildren: stagger },
+  },
+});
 
 const SectionTitle = ({
   title,
@@ -166,7 +181,7 @@ export default function Portfolio() {
   const reduceMotion = useReducedMotion();
 
   const [dark, setDark] = useState(true);
-  const [lang, setLang] = useState<Lang>("en"); // ✅ default EN
+  const [lang, setLang] = useState<Lang>("en");
 
   const [cvOpen, setCvOpen] = useState(false);
   const cvRef = useRef<HTMLDivElement | null>(null);
@@ -437,6 +452,11 @@ export default function Portfolio() {
       ? "border-white/10 bg-white/5 hover:bg-white/10"
       : "border-black/10 bg-black/5 hover:bg-black/10");
 
+  // Shared variants
+  const fadeUp = makeFadeUp(!!reduceMotion, 18);
+  const fadeUpBig = makeFadeUp(!!reduceMotion, 26);
+  const stagger = makeStagger(!!reduceMotion, 0.08, 0.07);
+
   return (
     <div className={`min-h-screen ${bg}`}>
       {/* Ambient (MOBIL-də söndürülüb) */}
@@ -455,8 +475,14 @@ export default function Portfolio() {
         />
       </div>
 
-      {/* Navbar (MOBIL-də blur söndürülüb) */}
-      <div className={`fixed top-0 left-0 right-0 z-50 ${navBg} border-b ${border} backdrop-blur-md max-md:backdrop-blur-0`}>
+      {/* Navbar */}
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={fadeUp}
+        className={`fixed top-0 left-0 right-0 z-50 ${navBg} border-b ${border} backdrop-blur-md max-md:backdrop-blur-0`}
+        style={{ willChange: "transform, opacity" }}
+      >
         <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between">
           <button onClick={() => scrollTo("home")} className="text-sm font-semibold tracking-wide">
             AndroidDev
@@ -489,7 +515,7 @@ export default function Portfolio() {
           </nav>
 
           <div className="flex items-center gap-2">
-            {/* ✅ Language toggle */}
+            {/* Language toggle */}
             <button
               onClick={() => setLang((p) => (p === "en" ? "az" : "en"))}
               className={iconBtn}
@@ -505,38 +531,61 @@ export default function Portfolio() {
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Content */}
       <div className="relative mx-auto max-w-6xl px-5 pt-28 pb-16">
-        {/* HERO */}
+        {/* HERO (page open smooth) */}
         <section id="home" className="min-h-[78vh] grid place-items-center">
           <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            initial="hidden"
+            animate="show"
+            variants={stagger}
             className="text-center max-w-3xl"
           >
-            <p className={"text-xs uppercase tracking-[0.25em] " + muted}>{t.hero.title}</p>
+            <motion.p
+              variants={fadeUp}
+              className={"text-xs uppercase tracking-[0.25em] " + muted}
+              style={{ willChange: "transform, opacity" }}
+            >
+              {t.hero.title}
+            </motion.p>
 
-            <h1 className="mt-3 text-4xl md:text-6xl font-semibold tracking-tight">{profile.name}</h1>
+            <motion.h1
+              variants={fadeUpBig}
+              className="mt-3 text-4xl md:text-6xl font-semibold tracking-tight"
+              style={{ willChange: "transform, opacity" }}
+            >
+              {profile.name}
+            </motion.h1>
 
-            <p className={"mt-5 text-sm md:text-base leading-relaxed " + muted}>{t.hero.headline}</p>
+            <motion.p
+              variants={fadeUp}
+              className={"mt-5 text-sm md:text-base leading-relaxed " + muted}
+              style={{ willChange: "transform, opacity" }}
+            >
+              {t.hero.headline}
+            </motion.p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <motion.div
+              variants={fadeUp}
+              className="mt-8 flex flex-wrap items-center justify-center gap-3"
+              style={{ willChange: "transform, opacity" }}
+            >
               {/* Desktop / Tablet CTAs */}
               <div className="hidden sm:flex flex-wrap items-center justify-center gap-3">
                 <div className="relative group">
-                  <Button variant="primary" tone={dark ? "dark" : "light"} onClick={() => scrollTo("projects")} className="min-w-[160px]">
+                  <Button
+                    variant="primary"
+                    tone={dark ? "dark" : "light"}
+                    onClick={() => scrollTo("projects")}
+                    className="min-w-[160px]"
+                  >
                     {t.hero.viewWork}
                     <motion.span
                       aria-hidden
                       animate={reduceMotion ? undefined : { y: [0, 4, 0] }}
-                      transition={
-                        reduceMotion
-                          ? undefined
-                          : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }
-                      }
+                      transition={reduceMotion ? undefined : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
                       className="inline-flex"
                     >
                       <ChevronDown size={16} />
@@ -571,11 +620,7 @@ export default function Portfolio() {
                   <motion.span
                     aria-hidden
                     animate={reduceMotion ? undefined : { y: [0, 4, 0] }}
-                    transition={
-                      reduceMotion
-                        ? undefined
-                        : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }
-                    }
+                    transition={reduceMotion ? undefined : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
                     className="inline-flex"
                   >
                     <ChevronDown size={16} />
@@ -586,10 +631,10 @@ export default function Portfolio() {
                   <Mail size={16} /> {t.hero.contact}
                 </Button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Download CV (dropdown) */}
-            <div className="relative mt-4 flex justify-center" ref={cvRef}>
+            <motion.div variants={fadeUp} className="relative mt-4 flex justify-center" ref={cvRef}>
               <Button variant="outline" tone={dark ? "dark" : "light"} onClick={() => setCvOpen((v) => !v)} className="min-w-[160px]">
                 {t.hero.downloadCV}
                 <motion.span
@@ -607,11 +652,7 @@ export default function Portfolio() {
                       ? undefined
                       : {
                         rotate: { duration: 0.18 },
-                        y: {
-                          duration: 1.2,
-                          repeat: cvOpen ? 0 : Infinity,
-                          ease: [0.4, 0, 0.2, 1],
-                        },
+                        y: { duration: 1.2, repeat: cvOpen ? 0 : Infinity, ease: [0.4, 0, 0.2, 1] },
                       }
                   }
                   className="inline-flex"
@@ -639,10 +680,7 @@ export default function Portfolio() {
                   href="/Baxtiyar_Alizada_CV_EN.pdf"
                   target="_blank"
                   rel="noreferrer"
-                  className={
-                    "flex items-center justify-between px-4 py-3 text-sm transition " +
-                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
-                  }
+                  className={"flex items-center justify-between px-4 py-3 text-sm transition " + (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")}
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (EN)</span>
@@ -655,144 +693,208 @@ export default function Portfolio() {
                   href="/Baxtiyar_Alizada_CV_AZ.pdf"
                   target="_blank"
                   rel="noreferrer"
-                  className={
-                    "flex items-center justify-between px-4 py-3 text-sm transition " +
-                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
-                  }
+                  className={"flex items-center justify-between px-4 py-3 text-sm transition " + (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")}
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (AZ)</span>
                   <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
                 </a>
               </motion.div>
-            </div>
+            </motion.div>
           </motion.div>
         </section>
 
-        {/* ABOUT */}
-        <motion.section id="about" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="py-20">
-          <SectionTitle title={t.about.title} subtitle={t.about.subtitle} subtitleClass={muted} />
+        {/* ABOUT (scroll reveal + stagger) */}
+        <motion.section
+          id="about"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={stagger}
+          className="py-20"
+        >
+          <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
+            <SectionTitle title={t.about.title} subtitle={t.about.subtitle} subtitleClass={muted} />
+          </motion.div>
 
-          <div className="mt-6 mb-10 flex flex-wrap items-center justify-center gap-2">
+          <motion.div variants={fadeUp} className="mt-6 mb-10 flex flex-wrap items-center justify-center gap-2">
             {t.about.focus.map((f) => (
               <Pill tone={dark ? "dark" : "light"} key={f}>
                 {f}
               </Pill>
             ))}
-          </div>
+          </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="p-6 lg:col-span-2">
-              <p className={"text-sm leading-relaxed " + muted}>{t.about.aboutText}</p>
+            <motion.div variants={fadeUp} className="lg:col-span-2" style={{ willChange: "transform, opacity" }}>
+              <Card className="p-6">
+                <p className={"text-sm leading-relaxed " + muted}>{t.about.aboutText}</p>
 
-              <div className="mt-6 grid sm:grid-cols-2 gap-4">
-                {[
-                  { key: "clean", ...t.about.cards.clean },
-                  { key: "ui", ...t.about.cards.ui },
-                  { key: "user", ...t.about.cards.user },
-                  { key: "perf", ...t.about.cards.perf },
-                ].map((c) => (
-                  <div
-                    key={c.key}
-                    className={
-                      "rounded-xl border p-4 " +
-                      (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
-                    }
-                  >
-                    <div className="text-sm font-medium">{c.title}</div>
-                    <div className={"mt-1 text-xs " + muted}>{c.desc}</div>
+                <motion.div
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, amount: 0.25 }}
+                  variants={makeStagger(!!reduceMotion, 0.04, 0.06)}
+                  className="mt-6 grid sm:grid-cols-2 gap-4"
+                >
+                  {[
+                    { key: "clean", ...t.about.cards.clean },
+                    { key: "ui", ...t.about.cards.ui },
+                    { key: "user", ...t.about.cards.user },
+                    { key: "perf", ...t.about.cards.perf },
+                  ].map((c) => (
+                    <motion.div
+                      key={c.key}
+                      variants={makeFadeUp(!!reduceMotion, 14)}
+                      className={"rounded-xl border p-4 " + (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")}
+                      style={{ willChange: "transform, opacity" }}
+                    >
+                      <div className="text-sm font-medium">{c.title}</div>
+                      <div className={"mt-1 text-xs " + muted}>{c.desc}</div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
+              <Card className="p-6">
+                <div className="text-sm font-medium">{t.about.journeyTitle}</div>
+                <p className={"mt-2 text-sm leading-relaxed " + muted}>{t.about.journeyText}</p>
+
+                <div className="mt-5 grid gap-3">
+                  <div className={"flex items-center gap-2 text-sm " + muted}>
+                    <MapPin size={16} /> {profile.contact.location}
                   </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="text-sm font-medium">{t.about.journeyTitle}</div>
-              <p className={"mt-2 text-sm leading-relaxed " + muted}>{t.about.journeyText}</p>
-
-              <div className="mt-5 grid gap-3">
-                <div className={"flex items-center gap-2 text-sm " + muted}>
-                  <MapPin size={16} /> {profile.contact.location}
+                  <div className={"flex items-center gap-2 text-sm " + muted}>
+                    <Mail size={16} /> {profile.contact.email}
+                  </div>
+                  <div className={"flex items-center gap-2 text-sm " + muted}>
+                    <Phone size={16} /> {profile.contact.phone}
+                  </div>
                 </div>
-                <div className={"flex items-center gap-2 text-sm " + muted}>
-                  <Mail size={16} /> {profile.contact.email}
-                </div>
-                <div className={"flex items-center gap-2 text-sm " + muted}>
-                  <Phone size={16} /> {profile.contact.phone}
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </motion.div>
           </div>
         </motion.section>
 
-        {/* SKILLS */}
-        <motion.section id="skills" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="py-20">
-          <SectionTitle title={t.skills.title} subtitle={t.skills.subtitle} subtitleClass={muted} />
+        {/* SKILLS (scroll reveal + stagger lists) */}
+        <motion.section
+          id="skills"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={stagger}
+          className="py-20"
+        >
+          <motion.div variants={fadeUp}>
+            <SectionTitle title={t.skills.title} subtitle={t.skills.subtitle} subtitleClass={muted} />
+          </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="p-6 lg:col-span-2">
-              <div className="text-sm font-medium mb-4">{t.skills.core}</div>
-              <div className="grid gap-4">
-                {skills.map((s) => (
-                  <div key={s.name}>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className={dark ? "text-white" : "text-black"}>{s.name}</span>
-                      <span className={muted}>{s.level}%</span>
-                    </div>
-                    <div className={"mt-2 h-2 rounded-full overflow-hidden " + (dark ? "bg-white/10" : "bg-black/10")}>
-                      <div className={"h-full rounded-full " + (dark ? "bg-white" : "bg-black")} style={{ width: `${s.level}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            <motion.div variants={fadeUp} className="lg:col-span-2" style={{ willChange: "transform, opacity" }}>
+              <Card className="p-6">
+                <div className="text-sm font-medium mb-4">{t.skills.core}</div>
 
-            <Card className="p-6">
-              <div className="text-sm font-medium mb-4">{t.skills.stack}</div>
-              <div className="flex flex-wrap gap-2">
-                {techTags.map((tt) => (
-                  <span
-                    key={tt}
-                    className={
-                      "text-xs rounded-full border px-3 py-1 " +
-                      (dark ? "border-white/10 bg-black/30 text-white/80" : "border-black/10 bg-white text-black/70")
-                    }
-                  >
-                    {tt}
-                  </span>
-                ))}
-              </div>
+                <motion.div
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, amount: 0.25 }}
+                  variants={makeStagger(!!reduceMotion, 0.04, 0.06)}
+                  className="grid gap-4"
+                >
+                  {skills.map((s) => (
+                    <motion.div key={s.name} variants={makeFadeUp(!!reduceMotion, 12)} style={{ willChange: "transform, opacity" }}>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className={dark ? "text-white" : "text-black"}>{s.name}</span>
+                        <span className={muted}>{s.level}%</span>
+                      </div>
+                      <div className={"mt-2 h-2 rounded-full overflow-hidden " + (dark ? "bg-white/10" : "bg-black/10")}>
+                        <div
+                          className={"h-full rounded-full " + (dark ? "bg-white" : "bg-black")}
+                          style={{ width: `${s.level}%` }}
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </Card>
+            </motion.div>
 
-              <div className={"mt-6 rounded-2xl border p-5 text-center " + (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")}>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <div className="text-2xl font-semibold">Junior</div>
-                    <div className={"text-xs mt-1 " + muted}>{t.skills.stats.level}</div>
+            <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
+              <Card className="p-6">
+                <div className="text-sm font-medium mb-4">{t.skills.stack}</div>
+
+                <motion.div
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, amount: 0.25 }}
+                  variants={makeStagger(!!reduceMotion, 0.02, 0.03)}
+                  className="flex flex-wrap gap-2"
+                >
+                  {techTags.map((tt) => (
+                    <motion.span
+                      key={tt}
+                      variants={makeFadeUp(!!reduceMotion, 10)}
+                      className={
+                        "text-xs rounded-full border px-3 py-1 " +
+                        (dark ? "border-white/10 bg-black/30 text-white/80" : "border-black/10 bg-white text-black/70")
+                      }
+                      style={{ willChange: "transform, opacity" }}
+                    >
+                      {tt}
+                    </motion.span>
+                  ))}
+                </motion.div>
+
+                <motion.div variants={makeFadeUp(!!reduceMotion, 14)} className={"mt-6 rounded-2xl border p-5 text-center " + (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")}>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <div className="text-2xl font-semibold">Junior</div>
+                      <div className={"text-xs mt-1 " + muted}>{t.skills.stats.level}</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-semibold">4+</div>
+                      <div className={"text-xs mt-1 " + muted}>{t.skills.stats.projects}</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-semibold">100%</div>
+                      <div className={"text-xs mt-1 " + muted}>{t.skills.stats.learning}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-2xl font-semibold">4+</div>
-                    <div className={"text-xs mt-1 " + muted}>{t.skills.stats.projects}</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold">100%</div>
-                    <div className={"text-xs mt-1 " + muted}>{t.skills.stats.learning}</div>
-                  </div>
-                </div>
-              </div>
-            </Card>
+                </motion.div>
+              </Card>
+            </motion.div>
           </div>
         </motion.section>
 
-        {/* PROJECTS */}
-        <motion.section id="projects" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="py-20">
-          <SectionTitle title={t.projects.title} subtitle={t.projects.subtitle} subtitleClass={muted} />
+        {/* PROJECTS (scroll reveal + stagger cards) */}
+        <motion.section
+          id="projects"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={stagger}
+          className="py-20"
+        >
+          <motion.div variants={fadeUp}>
+            <SectionTitle title={t.projects.title} subtitle={t.projects.subtitle} subtitleClass={muted} />
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.25 }}
+            variants={makeStagger(!!reduceMotion, 0.06, 0.08)}
+            className="grid md:grid-cols-2 gap-6"
+          >
             {projects.map((p) => (
               <motion.div
                 key={p.title}
+                variants={makeFadeUp(!!reduceMotion, 16)}
                 whileHover={reduceMotion ? undefined : { y: -4 }}
                 transition={{ duration: 0.2 }}
+                style={{ willChange: "transform, opacity" }}
               >
                 <Card className="p-6 h-full">
                   <div className="flex items-center justify-between gap-3">
@@ -833,119 +935,138 @@ export default function Portfolio() {
                 </Card>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </motion.section>
 
-        {/* CONTACT */}
-        <motion.section id="contact" {...fadeUp} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="py-20">
-          <SectionTitle title={t.contact.title} subtitle={t.contact.subtitle} subtitleClass={muted} />
+        {/* CONTACT (scroll reveal) */}
+        <motion.section
+          id="contact"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={stagger}
+          className="py-20"
+        >
+          <motion.div variants={fadeUp}>
+            <SectionTitle title={t.contact.title} subtitle={t.contact.subtitle} subtitleClass={muted} />
+          </motion.div>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <Card className="p-6">
-              <div className="text-sm font-medium">{t.contact.getInTouch}</div>
-              <div className="mt-5 grid gap-3">
-                <a
-                  className={
-                    "flex items-center justify-between rounded-xl border p-4 transition " +
-                    (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
-                  }
-                  href={`mailto:${profile.contact.email}`}
+            <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
+              <Card className="p-6">
+                <div className="text-sm font-medium">{t.contact.getInTouch}</div>
+                <div className="mt-5 grid gap-3">
+                  <a
+                    className={
+                      "flex items-center justify-between rounded-xl border p-4 transition " +
+                      (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
+                    }
+                    href={`mailto:${profile.contact.email}`}
+                  >
+                    <span className={"flex items-center gap-2 text-sm " + muted}>
+                      <Mail size={16} /> {profile.contact.email}
+                    </span>
+                    <ArrowRight size={16} className={muted} />
+                  </a>
+
+                  <a
+                    className={
+                      "flex items-center justify-between rounded-xl border p-4 transition " +
+                      (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
+                    }
+                    href={profile.contact.github}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <span className={"flex items-center gap-2 text-sm " + muted}>
+                      <Github size={16} /> GitHub
+                    </span>
+                    <ArrowRight size={16} className={muted} />
+                  </a>
+
+                  <a
+                    className={
+                      "flex items-center justify-between rounded-xl border p-4 transition " +
+                      (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
+                    }
+                    href={profile.contact.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <span className={"flex items-center gap-2 text-sm " + muted}>
+                      <Linkedin size={16} /> LinkedIn
+                    </span>
+                    <ArrowRight size={16} className={muted} />
+                  </a>
+                </div>
+
+                <div className={"mt-6 text-xs " + muted}>
+                  {t.contact.phoneLabel}: {profile.contact.phone}
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeUp} style={{ willChange: "transform, opacity" }}>
+              <Card className="p-6">
+                <div className="text-sm font-medium">{t.contact.sendMsg}</div>
+
+                <form
+                  className="mt-5 grid gap-3"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    alert(t.contact.form.alert);
+                  }}
                 >
-                  <span className={"flex items-center gap-2 text-sm " + muted}>
-                    <Mail size={16} /> {profile.contact.email}
-                  </span>
-                  <ArrowRight size={16} className={muted} />
-                </a>
+                  <input
+                    className={
+                      "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
+                      (dark
+                        ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
+                        : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
+                    }
+                    placeholder={t.contact.form.name}
+                  />
+                  <input
+                    type="email"
+                    className={
+                      "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
+                      (dark
+                        ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
+                        : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
+                    }
+                    placeholder={t.contact.form.email}
+                  />
+                  <textarea
+                    rows={4}
+                    className={
+                      "w-full rounded-xl border px-4 py-3 text-sm outline-none transition resize-none " +
+                      (dark
+                        ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
+                        : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
+                    }
+                    placeholder={t.contact.form.message}
+                  />
+                  <Button variant="primary" tone={dark ? "dark" : "light"} className="justify-center">
+                    {t.contact.form.send} <ArrowRight size={16} />
+                  </Button>
 
-                <a
-                  className={
-                    "flex items-center justify-between rounded-xl border p-4 transition " +
-                    (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
-                  }
-                  href={profile.contact.github}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span className={"flex items-center gap-2 text-sm " + muted}>
-                    <Github size={16} /> GitHub
-                  </span>
-                  <ArrowRight size={16} className={muted} />
-                </a>
-
-                <a
-                  className={
-                    "flex items-center justify-between rounded-xl border p-4 transition " +
-                    (dark ? "border-white/10 bg-black/30 hover:bg-white/5" : "border-black/10 bg-white hover:bg-black/5")
-                  }
-                  href={profile.contact.linkedin}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span className={"flex items-center gap-2 text-sm " + muted}>
-                    <Linkedin size={16} /> LinkedIn
-                  </span>
-                  <ArrowRight size={16} className={muted} />
-                </a>
-              </div>
-
-              <div className={"mt-6 text-xs " + muted}>
-                {t.contact.phoneLabel}: {profile.contact.phone}
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="text-sm font-medium">{t.contact.sendMsg}</div>
-
-              <form
-                className="mt-5 grid gap-3"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  alert(t.contact.form.alert);
-                }}
-              >
-                <input
-                  className={
-                    "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
-                    (dark
-                      ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
-                      : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
-                  }
-                  placeholder={t.contact.form.name}
-                />
-                <input
-                  type="email"
-                  className={
-                    "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
-                    (dark
-                      ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
-                      : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
-                  }
-                  placeholder={t.contact.form.email}
-                />
-                <textarea
-                  rows={4}
-                  className={
-                    "w-full rounded-xl border px-4 py-3 text-sm outline-none transition resize-none " +
-                    (dark
-                      ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
-                      : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
-                  }
-                  placeholder={t.contact.form.message}
-                />
-                <Button variant="primary" tone={dark ? "dark" : "light"} className="justify-center">
-                  {t.contact.form.send} <ArrowRight size={16} />
-                </Button>
-
-                <p className={"text-[11px] leading-relaxed " + muted}>{t.contact.form.note}</p>
-              </form>
-            </Card>
+                  <p className={"text-[11px] leading-relaxed " + muted}>{t.contact.form.note}</p>
+                </form>
+              </Card>
+            </motion.div>
           </div>
         </motion.section>
 
         {/* Footer */}
-        <footer className={"pt-10 text-center text-xs " + muted}>
+        <motion.footer
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.4 }}
+          variants={makeFadeUp(!!reduceMotion, 10)}
+          className={"pt-10 text-center text-xs " + muted}
+        >
           © {new Date().getFullYear()} {profile.name}. {t.footer}
-        </footer>
+        </motion.footer>
       </div>
     </div>
   );
