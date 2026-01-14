@@ -26,10 +26,12 @@ type Project = {
   title: string;
   description: string;
   tech: string[];
-  features?: string[]; // bunu əlavə et
   link?: string;
   status?: "Live" | "In progress" | "Coming soon";
+  features?: string[]; // ✅ Key features
 };
+
+/** ---------- UI small components ---------- */
 
 const SectionTitle = ({
   title,
@@ -46,8 +48,9 @@ const SectionTitle = ({
     </h2>
     {subtitle ? (
       <p
-        className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${subtitleClass ?? "text-white/60"
-          }`}
+        className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${
+          subtitleClass ?? "text-white/60"
+        }`}
       >
         {subtitle}
       </p>
@@ -58,51 +61,69 @@ const SectionTitle = ({
 const Pill = ({
   children,
   tone = "dark",
+  hoverInvert = false,
 }: {
   children: React.ReactNode;
   tone?: "dark" | "light";
-}) => (
-  <span
-    className={
-      "inline-flex items-center rounded-full border px-3 py-1 text-xs " +
-      (tone === "dark"
-        ? "border-white/10 bg-white/5 text-white/80"
-        : "border-black/10 bg-black/5 text-black/70")
-    }
-  >
-    {children}
-  </span>
-);
+  hoverInvert?: boolean;
+}) => {
+  const base =
+    "inline-flex items-center rounded-full border px-3 py-1 text-xs transition will-change-transform";
+  const darkStyle = "border-white/10 bg-white/5 text-white/80";
+  const lightStyle = "border-black/10 bg-black/5 text-black/70";
+
+  const invertDark =
+    "hover:bg-white hover:text-black hover:border-white/30";
+  const invertLight =
+    "hover:bg-black hover:text-white hover:border-black/30";
+
+  return (
+    <span
+      className={
+        base +
+        " " +
+        (tone === "dark" ? darkStyle : lightStyle) +
+        (hoverInvert ? " " + (tone === "dark" ? invertDark : invertLight) : "")
+      }
+    >
+      {children}
+    </span>
+  );
+};
 
 const Card = ({
   children,
   className = "",
-  enableLayout = true,
+  enableLayout = false,
+  hoverLift = false,
+  reduceMotion = false,
 }: {
   children: React.ReactNode;
   className?: string;
   enableLayout?: boolean;
-}) => (
-  <motion.div
-    // Layout = “məlumatlar yerinə yumşaq otursun”
-    layout={enableLayout}
-    transition={{
-      layout: {
-        duration: 0.75,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    }}
-    className={
-      // Desktop: blur + shadow
-      // Mobile (iOS): blur OFF + shadow OFF (performans)
-      "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_10px_40px_rgba(0,0,0,.35)] " +
-      "max-md:backdrop-blur-0 max-md:shadow-none " +
-      className
-    }
-  >
-    {children}
-  </motion.div>
-);
+  hoverLift?: boolean;
+  reduceMotion?: boolean;
+}) => {
+  const base =
+    "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_10px_40px_rgba(0,0,0,.35)] " +
+    "max-md:backdrop-blur-0 max-md:shadow-none " +
+    className;
+
+  return (
+    <motion.div
+      layout={enableLayout ? true : undefined}
+      className={base}
+      whileHover={
+        hoverLift && !reduceMotion
+          ? { y: -4 }
+          : undefined
+      }
+      transition={{ duration: 0.18 }}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 const Button = ({
   children,
@@ -111,6 +132,8 @@ const Button = ({
   variant = "primary",
   className = "",
   tone = "dark",
+  hoverLift = false,
+  reduceMotion = false,
 }: {
   children: React.ReactNode;
   href?: string;
@@ -118,9 +141,11 @@ const Button = ({
   variant?: "primary" | "outline";
   className?: string;
   tone?: "dark" | "light";
+  hoverLift?: boolean;
+  reduceMotion?: boolean;
 }) => {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition active:scale-[0.98]";
+    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition active:scale-[0.98] will-change-transform";
 
   const styles =
     variant === "primary"
@@ -128,15 +153,16 @@ const Button = ({
         ? "bg-white text-black hover:bg-white/90"
         : "bg-black text-white hover:bg-black/90"
       : tone === "dark"
-        ? "border border-white/15 bg-white/5 text-white hover:bg-white/10"
-        : "border border-black/15 bg-black/5 text-black hover:bg-black/10";
+      ? "border border-white/15 bg-white/5 text-white hover:bg-white/10"
+      : "border border-black/15 bg-black/5 text-black hover:bg-black/10";
 
   const isHashLink = typeof href === "string" && href.startsWith("#");
   const isExternal = typeof href === "string" && /^https?:\/\//.test(href);
   const Comp: any = href ? "a" : "button";
+  const MotionComp: any = motion(Comp);
 
   return (
-    <Comp
+    <MotionComp
       href={href}
       onClick={(e: any) => {
         if (isHashLink) e.preventDefault();
@@ -145,12 +171,19 @@ const Button = ({
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noreferrer" : undefined}
       className={`${base} ${styles} ${className}`}
+      whileHover={
+        hoverLift && !reduceMotion
+          ? { y: -3 }
+          : undefined
+      }
+      transition={{ duration: 0.18 }}
     >
       {children}
-    </Comp>
+    </MotionComp>
   );
 };
 
+/** ---------- Active section observer ---------- */
 function useActiveSection(ids: string[]) {
   const [active, setActive] = useState(ids[0] ?? "home");
 
@@ -169,11 +202,7 @@ function useActiveSection(ids: string[]) {
           );
         if (visible[0]?.target?.id) setActive(visible[0].target.id);
       },
-      {
-        root: null,
-        threshold: [0.2, 0.35, 0.5],
-        rootMargin: "-20% 0px -60% 0px",
-      }
+      { root: null, threshold: [0.2, 0.35, 0.5], rootMargin: "-20% 0px -60% 0px" }
     );
 
     els.forEach((el) => io.observe(el));
@@ -185,29 +214,24 @@ function useActiveSection(ids: string[]) {
 
 /** ---------- Motion helpers (performans-friendly) ---------- */
 const makeReveal = (reduce: boolean): Variants => ({
-  hidden: { opacity: 0, y: reduce ? 0 : 18 },
+  hidden: { opacity: 0, y: reduce ? 0 : 22 },
   show: {
     opacity: 1,
     y: 0,
     transition: reduce
       ? { duration: 0.01 }
-      : { duration: 0.65, ease: [0.16, 1, 0.3, 1] },
+      : { duration: 0.75, ease: [0.16, 1, 0.3, 1] },
   },
 });
 
-
-const makeStagger = (reduce: boolean, stagger = 0.08): Variants => ({
+const makeStagger = (reduce: boolean, stagger = 0.085): Variants => ({
   hidden: {},
   show: {
     transition: reduce
       ? { duration: 0.01 }
-      : {
-        staggerChildren: stagger,
-        delayChildren: 0.08,
-      },
+      : { staggerChildren: stagger, delayChildren: 0.08 },
   },
 });
-
 
 /** ---------- Skill Row (bar soldan-sağa dolur) ---------- */
 function SkillRow({
@@ -228,8 +252,6 @@ function SkillRow({
 
   const track = dark ? "bg-white/10" : "bg-black/10";
   const fill = dark ? "bg-white" : "bg-black";
-
-  // iOS üçün width anim yox, transform: scaleX
   const scaleX = Math.max(0, Math.min(1, level / 100));
 
   return (
@@ -248,13 +270,22 @@ function SkillRow({
           transition={
             reduceMotion
               ? { duration: 0.01 }
-              : { duration: 1.45, ease: [0.16, 1, 0.3, 1] } // bir az daha yavaş dolsun
+              : { duration: 1.1, ease: [0.16, 1, 0.3, 1] }
           }
         />
       </div>
     </div>
   );
 }
+
+/** ---------- Arrow hover (Contact list) ---------- */
+const arrowVariants: Variants = {
+  rest: { x: 0 },
+  hover: {
+    x: [0, 6, 0],
+    transition: { duration: 0.9, repeat: Infinity, ease: "easeInOut" },
+  },
+};
 
 export default function Portfolio() {
   const reduceMotion = useReducedMotion();
@@ -276,13 +307,7 @@ export default function Portfolio() {
 
   const t = useMemo(() => {
     const en = {
-      nav: {
-        home: "Home",
-        about: "About",
-        skills: "Skills",
-        projects: "Projects",
-        contact: "Contact",
-      },
+      nav: { home: "Home", about: "About", skills: "Skills", projects: "Projects", contact: "Contact" },
       hero: {
         title: "Junior Android Developer",
         headline:
@@ -320,6 +345,7 @@ export default function Portfolio() {
         subtitle: "Selected projects where I applied what I learned in practice.",
         viewGithub: "View on GitHub",
         askDetails: "Ask for details",
+        features: "Key features",
       },
       contact: {
         title: "Let's Work Together",
@@ -342,13 +368,7 @@ export default function Portfolio() {
     };
 
     const az = {
-      nav: {
-        home: "Home",
-        about: "Haqqımda",
-        skills: "Bacarıqlar",
-        projects: "Layihələr",
-        contact: "Əlaqə",
-      },
+      nav: { home: "Home", about: "Haqqımda", skills: "Bacarıqlar", projects: "Layihələr", contact: "Əlaqə" },
       hero: {
         title: "Junior Android Developer",
         headline:
@@ -374,8 +394,7 @@ export default function Portfolio() {
       },
       skills: {
         title: "Bacarıqlar və Texnologiyalar",
-        subtitle:
-          "Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar.",
+        subtitle: "Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar.",
         core: "Əsas Bacarıqlar",
         stack: "Texnologiya Stack",
         stat1: "Səviyyə",
@@ -387,6 +406,7 @@ export default function Portfolio() {
         subtitle: "Öyrəndiklərimi praktikada tətbiq etdiyim seçilmiş layihələr.",
         viewGithub: "GitHub-da bax",
         askDetails: "Detallar üçün yaz",
+        features: "Əsas xüsusiyyətlər",
       },
       contact: {
         title: "Birlikdə işləyək",
@@ -423,17 +443,17 @@ export default function Portfolio() {
       focus:
         lang === "en"
           ? [
-            "MVVM & Clean Architecture",
-            "Async programming (Coroutines, Flow)",
-            "REST API integration",
-            "Working with new technologies",
-          ]
+              "MVVM & Clean Architecture",
+              "Async programming (Coroutines, Flow)",
+              "REST API integration",
+              "Working with new technologies",
+            ]
           : [
-            "MVVM & Clean Architecture",
-            "Asinxron proqramlaşdırma (Coroutines, Flow)",
-            "REST API inteqrasiyası",
-            "Yeni texnologiyalarla işləmək",
-          ],
+              "MVVM & Clean Architecture",
+              "Asinxron proqramlaşdırma (Coroutines, Flow)",
+              "REST API inteqrasiyası",
+              "Yeni texnologiyalarla işləmək",
+            ],
       contact: {
         email: "baxtiyaralizada1@gmail.com",
         phone: "077 333 98 31",
@@ -486,93 +506,89 @@ export default function Portfolio() {
         status: "Live",
         description:
           lang === "en"
-            ? "ATL Academy final project — an Android app for movie enthusiasts. Browse trending and top-rated titles, explore detailed movie information, and enjoy a smooth, responsive experience powered by MVVM and Retrofit-based API integration."
-            : "ATL Academy final layihəsi — film həvəskarları üçün Android tətbiqi. Trending və Top Rated siyahılarını izləmək, film detallarına baxmaq və MVVM + Retrofit əsaslı API inteqrasiyası ilə rahat istifadə təcrübəsi təqdim edir.",
+            ? "ATL Academy final project — an Android app for movie enthusiasts. Browse trending/top-rated titles, explore details, and deliver a smooth, responsive experience with MVVM and Retrofit-based API integration."
+            : "ATL Academy final layihəsi — film həvəskarları üçün Android tətbiqi. Trend/Top Rated siyahılarını izləmək, film detallarına baxmaq və rahat istifadə təcrübəsi üçün MVVM + Retrofit ilə API inteqrasiyası tətbiq olunub.",
+        tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
+        link: "https://github.com/Baxtiyar09/moviesApp",
         features:
           lang === "en"
             ? [
-              "Category-based movie feeds with dynamic data loading",
-              "Dedicated detail screens with structured UI components",
-              "Error, loading, and empty state handling for API calls",
-            ]
+                "Search + quick filtering",
+                "Favorites / watchlist flow",
+                "Detail screen with cast info",
+              ]
             : [
-              "Kateqoriyalar üzrə dinamik film axınları",
-              "Strukturlaşdırılmış UI komponentləri ilə detail ekranlar",
-              "API sorğuları üçün error, loading və empty state idarəsi",
-            ],
-        tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
-        link: "https://github.com/Baxtiyar09/moviesApp",
+                "Axtarış + sürətli filter",
+                "Seçilmişlər / izləmə siyahısı",
+                "Detallar + aktyorlar bölməsi",
+              ],
       },
-
       {
         title: "HeyatYolu",
         status: "In progress",
         description:
           lang === "en"
-            ? "A digital memory platform designed to preserve stories and memories of loved ones. Built with real backend integration, structured content management, onboarding flow, and carefully handled UI states."
-            : "Yaxınlarını itirmiş insanlar üçün xatirələrin rəqəmsal formada saxlanması məqsədi ilə hazırlanmış platforma. Real backend inteqrasiyası, strukturlaşdırılmış kontent idarəetməsi və stabil UI həlləri ilə qurulub.",
+            ? "A digital memory platform for preserving stories and memories of loved ones. Built with real backend integration, structured content management, onboarding flow, and stable UI states such as loading and empty screens."
+            : "Yaxınlarını itirmiş insanlar üçün xatirələrin rəqəmsal formada saxlanması üçün hazırlanmış platforma. Real backend inteqrasiyası, strukturlaşdırılmış kontent idarəetməsi, onboarding axını və loading/empty state kimi stabil UI həlləri mövcuddur.",
+        tech: ["Kotlin", "MVVM", "Backend API", "Authentication"],
         features:
           lang === "en"
             ? [
-              "Backend-driven data creation, update, and retrieval",
-              "User flows designed around long-term data persistence",
-              "Consistent screen behavior across different data states",
-            ]
+                "Secure sign-in & sessions",
+                "Media upload + preview",
+                "Role-based content access",
+              ]
             : [
-              "Backend üzərindən məlumatların yaradılması və idarə olunması",
-              "Uzunmüddətli məlumat saxlanmasına uyğun istifadəçi axınları",
-              "Fərqli data vəziyyətlərində sabit ekran davranışı",
-            ],
-        tech: ["Kotlin", "MVVM", "Backend API", "Authentication"],
+                "Giriş (auth) + sessiya idarəsi",
+                "Media əlavə etmə + preview",
+                "İcazələrə görə kontent erişimi",
+              ],
       },
-
       {
         title: "Herrac",
         status: "Coming soon",
         description:
           lang === "en"
-            ? "An upcoming e-commerce-style Android application planned for Google Play. The project focuses on clean architecture, scalability, and performance-oriented UI using modern Android development practices."
-            : "Google Play üçün planlaşdırılan e-commerce tipli Android tətbiqi. Layihə Clean Architecture, genişlənə bilən struktur və performans yönümlü modern UI üzərində qurulur.",
+            ? "An upcoming e-commerce style project planned for Google Play after the next phase. Focused on clean architecture, scalable structure, and performance-friendly UI with modern Android practices."
+            : "Növbəti mərhələdən sonra Google Play üçün planlaşdırılan e-commerce tipli layihə. Clean Architecture, genişlənə bilən struktur və performans yönümlü modern UI yanaşması üzərində qurulur.",
+        tech: ["Clean Architecture", "Performance", "Modern UI"],
         features:
           lang === "en"
             ? [
-              "Layered architecture with clear separation of concerns",
-              "Scalable project structure prepared for future growth",
-              "UI decisions optimized for smooth runtime performance",
-            ]
+                "Product listing + categories",
+                "Cart & checkout concept",
+                "Offline-friendly caching plan",
+              ]
             : [
-              "Layer-lərə ayrılmış və məsuliyyətləri dəqiq bölünmüş arxitektura",
-              "Gələcək genişlənmələr üçün uyğun layihə strukturu",
-              "Rahat və axıcı işləmə üçün optimallaşdırılmış UI yanaşması",
-            ],
-        tech: ["Clean Architecture", "Performance", "Modern UI"],
+                "Məhsul siyahısı + kateqoriyalar",
+                "Səbət + checkout konsepti",
+                "Offline cache planı",
+              ],
       },
-
       {
         title: "Astrology App",
         status: "Coming soon",
         description:
           lang === "en"
-            ? "A zodiac-based mobile application providing daily and weekly insights. Designed with API-driven content flow, smooth navigation, and a clean, readable UI."
-            : "Bürclər üzrə gündəlik və həftəlik proqnozlar təqdim edən mobil tətbiq. API əsaslı kontent axını, rahat naviqasiya və oxunaqlı modern UI ilə planlaşdırılır.",
+            ? "A zodiac-focused app with daily/weekly insights and clean content presentation. Planned features include API-driven predictions, smooth navigation, and a modern UI built for readability."
+            : "Bürclər üçün gündəlik/həftəlik proqnozlar və səliqəli kontent təqdimatı edən tətbiq. API ilə proqnoz məlumatları, rahat naviqasiya və oxunaqlı modern UI üzərində planlaşdırılır.",
+        tech: ["REST API", "Kotlin", "Modern UI"],
         features:
           lang === "en"
             ? [
-              "Centralized data handling for horoscope content",
-              "Screen layouts optimized for text-heavy information",
-              "Navigation flow designed for quick content access",
-            ]
+                "Daily / weekly cards",
+                "Shareable insight snippets",
+                "Saved sign preferences",
+              ]
             : [
-              "Bürc məlumatları üçün mərkəzləşdirilmiş data idarəetməsi",
-              "Mətn ağırlıqlı kontent üçün uyğun ekran strukturları",
-              "Sürətli keçidlər üçün planlaşdırılmış naviqasiya axını",
-            ],
-        tech: ["REST API", "Kotlin", "Modern UI"],
+                "Gündəlik / həftəlik kartlar",
+                "Paylaşılabilən qısa mətnlər",
+                "Seçilmiş bürclər yadda saxlanır",
+              ],
       },
     ],
     [lang]
   );
-
 
   const sections = useMemo(
     () => [
@@ -597,12 +613,12 @@ export default function Portfolio() {
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  // motion variants
   const reveal = makeReveal(!!reduceMotion);
-  const stagger = makeStagger(!!reduceMotion, 0.06);
+  const stagger = makeStagger(!!reduceMotion, 0.085);
   const heroStagger = makeStagger(!!reduceMotion, 0.14);
 
-  // Layout animasiyanı reduceMotion-da söndürürük
-  const enableLayout = !reduceMotion;
+  const enableLayout = true;
 
   return (
     <div className={`min-h-screen ${bg}`}>
@@ -648,8 +664,8 @@ export default function Portfolio() {
                         ? "text-white"
                         : "text-black"
                       : dark
-                        ? "text-white/60 hover:text-white"
-                        : "text-black/55 hover:text-black")
+                      ? "text-white/60 hover:text-white"
+                      : "text-black/55 hover:text-black")
                   }
                 >
                   <span
@@ -741,6 +757,8 @@ export default function Portfolio() {
                     tone={dark ? "dark" : "light"}
                     onClick={() => scrollTo("projects")}
                     className="min-w-[160px]"
+                    hoverLift
+                    reduceMotion={!!reduceMotion}
                   >
                     {t.hero.viewWork}
                     <motion.span
@@ -749,11 +767,7 @@ export default function Portfolio() {
                       transition={
                         reduceMotion
                           ? undefined
-                          : {
-                            duration: 1.1,
-                            repeat: Infinity,
-                            ease: [0.4, 0, 0.2, 1],
-                          }
+                          : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }
                       }
                       className="inline-flex"
                     >
@@ -778,22 +792,30 @@ export default function Portfolio() {
                   variant="outline"
                   tone={dark ? "dark" : "light"}
                   className="min-w-[140px]"
+                  hoverLift
+                  reduceMotion={!!reduceMotion}
                 >
                   <Github size={16} /> GitHub
                 </Button>
+
                 <Button
                   href={profile.contact.linkedin}
                   variant="outline"
                   tone={dark ? "dark" : "light"}
                   className="min-w-[140px]"
+                  hoverLift
+                  reduceMotion={!!reduceMotion}
                 >
                   <Linkedin size={16} /> LinkedIn
                 </Button>
+
                 <Button
                   href={`mailto:${profile.contact.email}`}
                   variant="outline"
                   tone={dark ? "dark" : "light"}
                   className="min-w-[140px]"
+                  hoverLift
+                  reduceMotion={!!reduceMotion}
                 >
                   <Mail size={16} /> {t.hero.contact}
                 </Button>
@@ -806,6 +828,8 @@ export default function Portfolio() {
                   tone={dark ? "dark" : "light"}
                   onClick={() => scrollTo("projects")}
                   className="flex-1"
+                  hoverLift
+                  reduceMotion={!!reduceMotion}
                 >
                   {t.hero.projects}
                   <motion.span
@@ -814,22 +838,21 @@ export default function Portfolio() {
                     transition={
                       reduceMotion
                         ? undefined
-                        : {
-                          duration: 1.1,
-                          repeat: Infinity,
-                          ease: [0.4, 0, 0.2, 1],
-                        }
+                        : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }
                     }
                     className="inline-flex"
                   >
                     <ChevronDown size={16} />
                   </motion.span>
                 </Button>
+
                 <Button
                   href={`mailto:${profile.contact.email}`}
                   variant="outline"
                   tone={dark ? "dark" : "light"}
                   className="flex-1"
+                  hoverLift
+                  reduceMotion={!!reduceMotion}
                 >
                   <Mail size={16} /> {t.hero.contact}
                 </Button>
@@ -847,6 +870,8 @@ export default function Portfolio() {
                 tone={dark ? "dark" : "light"}
                 onClick={() => setCvOpen((v) => !v)}
                 className="min-w-[160px]"
+                hoverLift
+                reduceMotion={!!reduceMotion}
               >
                 {t.hero.downloadCV}
                 <motion.span
@@ -854,22 +879,15 @@ export default function Portfolio() {
                   animate={
                     reduceMotion
                       ? undefined
-                      : {
-                        rotate: cvOpen ? 180 : 0,
-                        y: cvOpen ? 0 : [0, 4, 0],
-                      }
+                      : { rotate: cvOpen ? 180 : 0, y: cvOpen ? 0 : [0, 4, 0] }
                   }
                   transition={
                     reduceMotion
                       ? undefined
                       : {
-                        rotate: { duration: 0.18 },
-                        y: {
-                          duration: 1.2,
-                          repeat: cvOpen ? 0 : Infinity,
-                          ease: [0.4, 0, 0.2, 1],
-                        },
-                      }
+                          rotate: { duration: 0.18 },
+                          y: { duration: 1.2, repeat: cvOpen ? 0 : Infinity, ease: [0.4, 0, 0.2, 1] },
+                        }
                   }
                   className="inline-flex"
                 >
@@ -889,9 +907,7 @@ export default function Portfolio() {
                   "absolute left-1/2 -translate-x-1/2 mt-2 w-52 rounded-2xl border overflow-hidden " +
                   "shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-md " +
                   "max-md:shadow-none max-md:backdrop-blur-0 " +
-                  (dark
-                    ? "border-white/10 bg-black/70"
-                    : "border-black/10 bg-white/90")
+                  (dark ? "border-white/10 bg-black/70" : "border-black/10 bg-white/90")
                 }
               >
                 <a
@@ -900,17 +916,12 @@ export default function Portfolio() {
                   rel="noreferrer"
                   className={
                     "flex items-center justify-between px-4 py-3 text-sm transition " +
-                    (dark
-                      ? "text-white/90 hover:bg-white/10"
-                      : "text-black/80 hover:bg-black/5")
+                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
                   }
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (EN)</span>
-                  <ArrowRight
-                    size={16}
-                    className={dark ? "text-white/60" : "text-black/50"}
-                  />
+                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
                 </a>
 
                 <div className={dark ? "h-px bg-white/10" : "h-px bg-black/10"} />
@@ -921,17 +932,12 @@ export default function Portfolio() {
                   rel="noreferrer"
                   className={
                     "flex items-center justify-between px-4 py-3 text-sm transition " +
-                    (dark
-                      ? "text-white/90 hover:bg-white/10"
-                      : "text-black/80 hover:bg-black/5")
+                    (dark ? "text-white/90 hover:bg-white/10" : "text-black/80 hover:bg-black/5")
                   }
                   onClick={() => setCvOpen(false)}
                 >
                   <span>CV (AZ)</span>
-                  <ArrowRight
-                    size={16}
-                    className={dark ? "text-white/60" : "text-black/50"}
-                  />
+                  <ArrowRight size={16} className={dark ? "text-white/60" : "text-black/50"} />
                 </a>
               </motion.div>
             </motion.div>
@@ -948,11 +954,7 @@ export default function Portfolio() {
           className="py-20"
         >
           <motion.div variants={reveal}>
-            <SectionTitle
-              title={t.about.title}
-              subtitle={t.about.subtitle}
-              subtitleClass={muted}
-            />
+            <SectionTitle title={t.about.title} subtitle={t.about.subtitle} subtitleClass={muted} />
           </motion.div>
 
           <motion.div
@@ -968,15 +970,14 @@ export default function Portfolio() {
 
           <div className="grid lg:grid-cols-3 gap-6">
             <motion.div variants={reveal} className="lg:col-span-2">
-              <Card enableLayout={enableLayout} className="p-6">
-                <motion.p layout="position" className={"text-sm leading-relaxed " + muted}>
-                  {profile.about}
-                </motion.p>
+              <Card
+                reduceMotion={!!reduceMotion}
+                hoverLift
+                className="p-6"
+              >
+                <p className={"text-sm leading-relaxed " + muted}>{profile.about}</p>
 
-                <motion.div
-                  variants={stagger}
-                  className="mt-6 grid sm:grid-cols-2 gap-4"
-                >
+                <motion.div variants={stagger} className="mt-6 grid sm:grid-cols-2 gap-4">
                   {[
                     { title: "Clean Code", text: t.about.cards.clean },
                     { title: "Modern UI/UX", text: t.about.cards.ui },
@@ -986,23 +987,15 @@ export default function Portfolio() {
                     <motion.div
                       key={item.title}
                       variants={reveal}
-                      layout={enableLayout}
-                      transition={{
-                        layout: { duration: 0.75, ease: [0.16, 1, 0.3, 1] },
-                      }}
+                      whileHover={!reduceMotion ? { y: -3 } : undefined}
+                      transition={{ duration: 0.18 }}
                       className={
                         "rounded-xl border p-4 " +
-                        (dark
-                          ? "border-white/10 bg-black/30"
-                          : "border-black/10 bg-white")
+                        (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
                       }
                     >
-                      <motion.div layout="position" className="text-sm font-medium">
-                        {item.title}
-                      </motion.div>
-                      <motion.div layout="position" className={"mt-1 text-xs " + muted}>
-                        {item.text}
-                      </motion.div>
+                      <div className="text-sm font-medium">{item.title}</div>
+                      <div className={"mt-1 text-xs " + muted}>{item.text}</div>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -1010,14 +1003,14 @@ export default function Portfolio() {
             </motion.div>
 
             <motion.div variants={reveal}>
-              <Card enableLayout={enableLayout} className="p-6">
-                <motion.div layout="position" className="text-sm font-medium">
-                  {t.about.journeyTitle}
-                </motion.div>
-                <motion.p layout="position" className={"mt-2 text-sm leading-relaxed " + muted}>
-                  {t.about.journeyText}
-                </motion.p>
-                <motion.div layout="position" className="mt-5 grid gap-3">
+              <Card
+                reduceMotion={!!reduceMotion}
+                hoverLift
+                className="p-6"
+              >
+                <div className="text-sm font-medium">{t.about.journeyTitle}</div>
+                <p className={"mt-2 text-sm leading-relaxed " + muted}>{t.about.journeyText}</p>
+                <div className="mt-5 grid gap-3">
                   <div className={"flex items-center gap-2 text-sm " + muted}>
                     <MapPin size={16} /> {profile.contact.location}
                   </div>
@@ -1027,7 +1020,7 @@ export default function Portfolio() {
                   <div className={"flex items-center gap-2 text-sm " + muted}>
                     <Phone size={16} /> {profile.contact.phone}
                   </div>
-                </motion.div>
+                </div>
               </Card>
             </motion.div>
           </div>
@@ -1043,20 +1036,13 @@ export default function Portfolio() {
           className="py-20"
         >
           <motion.div variants={reveal}>
-            <SectionTitle
-              title={t.skills.title}
-              subtitle={t.skills.subtitle}
-              subtitleClass={muted}
-            />
+            <SectionTitle title={t.skills.title} subtitle={t.skills.subtitle} subtitleClass={muted} />
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-6">
             <motion.div variants={reveal} className="lg:col-span-2">
-              <Card enableLayout={enableLayout} className="p-6">
-                <motion.div layout="position" className="text-sm font-medium mb-4">
-                  {t.skills.core}
-                </motion.div>
-
+              <Card className="p-6" reduceMotion={!!reduceMotion}>
+                <div className="text-sm font-medium mb-4">{t.skills.core}</div>
                 <div className="grid gap-4">
                   {skills.map((s) => (
                     <SkillRow
@@ -1073,51 +1059,47 @@ export default function Portfolio() {
             </motion.div>
 
             <motion.div variants={reveal}>
-              <Card enableLayout={enableLayout} className="p-6">
-                <motion.div layout="position" className="text-sm font-medium mb-4">
-                  {t.skills.stack}
-                </motion.div>
+              <Card className="p-6" reduceMotion={!!reduceMotion}>
+                <div className="text-sm font-medium mb-4">{t.skills.stack}</div>
 
-                <motion.div layout="position" className="flex flex-wrap gap-2">
+                {/* Pills: hover invert */}
+                <div className="flex flex-wrap gap-2">
                   {techTags.map((tag) => (
-                    <span
+                    <Pill
                       key={tag}
-                      className={
-                        "text-xs rounded-full border px-3 py-1 " +
-                        (dark
-                          ? "border-white/10 bg-black/30 text-white/80"
-                          : "border-black/10 bg-white text-black/70")
-                      }
+                      tone={dark ? "dark" : "light"}
+                      hoverInvert
                     >
                       {tag}
-                    </span>
+                    </Pill>
                   ))}
-                </motion.div>
+                </div>
 
-                <motion.div
-                  layout="position"
+                {/* Stats: hover scale */}
+                <div
                   className={
                     "mt-6 rounded-2xl border p-5 text-center " +
-                    (dark
-                      ? "border-white/10 bg-black/30"
-                      : "border-black/10 bg-white")
+                    (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
                   }
                 >
                   <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <div className="text-2xl font-semibold">Junior</div>
-                      <div className={"text-xs mt-1 " + muted}>{t.skills.stat1}</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-semibold">4+</div>
-                      <div className={"text-xs mt-1 " + muted}>{t.skills.stat2}</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-semibold">100%</div>
-                      <div className={"text-xs mt-1 " + muted}>{t.skills.stat3}</div>
-                    </div>
+                    {[
+                      { big: "Junior", small: t.skills.stat1 },
+                      { big: "4+", small: t.skills.stat2 },
+                      { big: "100%", small: t.skills.stat3 },
+                    ].map((s) => (
+                      <motion.div
+                        key={s.big}
+                        whileHover={!reduceMotion ? { scale: 1.06 } : undefined}
+                        transition={{ duration: 0.18 }}
+                        className="cursor-default"
+                      >
+                        <div className="text-2xl font-semibold">{s.big}</div>
+                        <div className={"text-xs mt-1 " + muted}>{s.small}</div>
+                      </motion.div>
+                    ))}
                   </div>
-                </motion.div>
+                </div>
               </Card>
             </motion.div>
           </div>
@@ -1133,11 +1115,7 @@ export default function Portfolio() {
           className="py-20"
         >
           <motion.div variants={reveal}>
-            <SectionTitle
-              title={t.projects.title}
-              subtitle={t.projects.subtitle}
-              subtitleClass={muted}
-            />
+            <SectionTitle title={t.projects.title} subtitle={t.projects.subtitle} subtitleClass={muted} />
           </motion.div>
 
           <motion.div variants={stagger} className="grid md:grid-cols-2 gap-6">
@@ -1148,15 +1126,9 @@ export default function Portfolio() {
                 whileHover={reduceMotion ? undefined : { y: -4 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card enableLayout={enableLayout} className="p-6 h-full">
-                  <motion.div
-                    layout="position"
-                    className="flex items-center justify-between gap-3"
-                  >
-                    <motion.h3
-                      layout="position"
-                      className="text-lg font-semibold tracking-tight"
-                    >
+                <Card enableLayout={enableLayout} reduceMotion={!!reduceMotion} className="p-6 h-full">
+                  <motion.div layout="position" className="flex items-center justify-between gap-3">
+                    <motion.h3 layout="position" className="text-lg font-semibold tracking-tight">
                       {p.title}
                     </motion.h3>
 
@@ -1175,36 +1147,21 @@ export default function Portfolio() {
                     ) : null}
                   </motion.div>
 
-                  <motion.p
-                    layout="position"
-                    className={"mt-2 text-sm leading-relaxed " + muted}
-                  >
+                  <motion.p layout="position" className={"mt-2 text-sm leading-relaxed " + muted}>
                     {p.description}
                   </motion.p>
 
-                  {/* Key Features (minimal) */}
+                  {/* ✅ Key features (minimal) */}
                   {p.features?.length ? (
                     <motion.div layout="position" className="mt-4">
-                      <div
-                        className={
-                          "text-xs font-medium tracking-wide mb-2 " +
-                          (dark ? "text-white/60" : "text-black/55")
-                        }
-                      >
-                        {lang === "en" ? "Key features" : "Əsas xüsusiyyətlər"}
+                      <div className={"text-[11px] uppercase tracking-[0.18em] " + muted}>
+                        {t.projects.features}
                       </div>
-
-                      <ul className="space-y-1">
-                        {p.features.map((feature) => (
-                          <li
-                            key={feature}
-                            className={
-                              "text-xs leading-relaxed flex gap-2 " +
-                              (dark ? "text-white/55" : "text-black/55")
-                            }
-                          >
-                            <span className="opacity-60">–</span>
-                            <span>{feature}</span>
+                      <ul className={"mt-2 text-sm " + muted}>
+                        {p.features.slice(0, 3).map((f) => (
+                          <li key={f} className="flex items-start gap-2">
+                            <span className={dark ? "text-white/60" : "text-black/50"}>•</span>
+                            <span>{f}</span>
                           </li>
                         ))}
                       </ul>
@@ -1225,6 +1182,8 @@ export default function Portfolio() {
                         href={p.link}
                         variant="outline"
                         tone={dark ? "dark" : "light"}
+                        hoverLift
+                        reduceMotion={!!reduceMotion}
                       >
                         <Github size={16} /> {t.projects.viewGithub}
                       </Button>
@@ -1233,6 +1192,8 @@ export default function Portfolio() {
                         variant="outline"
                         tone={dark ? "dark" : "light"}
                         onClick={() => scrollTo("contact")}
+                        hoverLift
+                        reduceMotion={!!reduceMotion}
                       >
                         <Mail size={16} /> {t.projects.askDetails}
                       </Button>
@@ -1244,7 +1205,6 @@ export default function Portfolio() {
           </motion.div>
         </motion.section>
 
-
         {/* CONTACT */}
         <motion.section
           id="contact"
@@ -1255,82 +1215,72 @@ export default function Portfolio() {
           className="py-20"
         >
           <motion.div variants={reveal}>
-            <SectionTitle
-              title={t.contact.title}
-              subtitle={t.contact.subtitle}
-              subtitleClass={muted}
-            />
+            <SectionTitle title={t.contact.title} subtitle={t.contact.subtitle} subtitleClass={muted} />
           </motion.div>
 
           <div className="grid lg:grid-cols-2 gap-6">
             <motion.div variants={reveal}>
-              <Card enableLayout={enableLayout} className="p-6">
-                <motion.div layout="position" className="text-sm font-medium">
-                  {t.contact.getInTouch}
-                </motion.div>
+              <Card className="p-6" reduceMotion={!!reduceMotion} hoverLift>
+                <div className="text-sm font-medium">{t.contact.getInTouch}</div>
 
-                <motion.div layout="position" className="mt-5 grid gap-3">
-                  <a
-                    className={
-                      "flex items-center justify-between rounded-xl border p-4 transition " +
-                      (dark
-                        ? "border-white/10 bg-black/30 hover:bg-white/5"
-                        : "border-black/10 bg-white hover:bg-black/5")
-                    }
-                    href={`mailto:${profile.contact.email}`}
-                  >
-                    <span className={"flex items-center gap-2 text-sm " + muted}>
-                      <Mail size={16} /> {profile.contact.email}
-                    </span>
-                    <ArrowRight size={16} className={muted} />
-                  </a>
+                <div className="mt-5 grid gap-3">
+                  {[
+                    {
+                      label: profile.contact.email,
+                      href: `mailto:${profile.contact.email}`,
+                      icon: <Mail size={16} />,
+                    },
+                    {
+                      label: "GitHub",
+                      href: profile.contact.github,
+                      icon: <Github size={16} />,
+                      external: true,
+                    },
+                    {
+                      label: "LinkedIn",
+                      href: profile.contact.linkedin,
+                      icon: <Linkedin size={16} />,
+                      external: true,
+                    },
+                  ].map((item) => (
+                    <motion.a
+                      key={item.label}
+                      href={item.href}
+                      target={item.external ? "_blank" : undefined}
+                      rel={item.external ? "noreferrer" : undefined}
+                      initial="rest"
+                      whileHover="hover"
+                      animate="rest"
+                      className={
+                        "flex items-center justify-between rounded-xl border p-4 transition " +
+                        (dark
+                          ? "border-white/10 bg-black/30 hover:bg-white/5"
+                          : "border-black/10 bg-white hover:bg-black/5")
+                      }
+                    >
+                      <span className={"flex items-center gap-2 text-sm " + muted}>
+                        {item.icon} {item.label}
+                      </span>
 
-                  <a
-                    className={
-                      "flex items-center justify-between rounded-xl border p-4 transition " +
-                      (dark
-                        ? "border-white/10 bg-black/30 hover:bg-white/5"
-                        : "border-black/10 bg-white hover:bg-black/5")
-                    }
-                    href={profile.contact.github}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span className={"flex items-center gap-2 text-sm " + muted}>
-                      <Github size={16} /> GitHub
-                    </span>
-                    <ArrowRight size={16} className={muted} />
-                  </a>
+                      <motion.span
+                        variants={reduceMotion ? { rest: { x: 0 }, hover: { x: 0 } } : arrowVariants}
+                        className={muted}
+                      >
+                        <ArrowRight size={16} />
+                      </motion.span>
+                    </motion.a>
+                  ))}
+                </div>
 
-                  <a
-                    className={
-                      "flex items-center justify-between rounded-xl border p-4 transition " +
-                      (dark
-                        ? "border-white/10 bg-black/30 hover:bg-white/5"
-                        : "border-black/10 bg-white hover:bg-black/5")
-                    }
-                    href={profile.contact.linkedin}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span className={"flex items-center gap-2 text-sm " + muted}>
-                      <Linkedin size={16} /> LinkedIn
-                    </span>
-                    <ArrowRight size={16} className={muted} />
-                  </a>
-                </motion.div>
-
-                <motion.div layout="position" className={"mt-6 text-xs " + muted}>
+                <div className={"mt-6 text-xs " + muted}>
                   {t.contact.phoneLabel}: {profile.contact.phone}
-                </motion.div>
+                </div>
               </Card>
             </motion.div>
 
             <motion.div variants={reveal}>
-              <Card enableLayout={enableLayout} className="p-6">
-                <motion.div layout="position" className="text-sm font-medium">
-                  {t.contact.sendMsg}
-                </motion.div>
+              <Card className="p-6" reduceMotion={!!reduceMotion} hoverLift>
+                <div className="text-sm font-medium">{t.contact.sendMsg}</div>
 
                 <form
                   className="mt-5 grid gap-3"
@@ -1348,6 +1298,7 @@ export default function Portfolio() {
                     }
                     placeholder={t.contact.form.name}
                   />
+
                   <input
                     type="email"
                     className={
@@ -1358,6 +1309,7 @@ export default function Portfolio() {
                     }
                     placeholder={t.contact.form.email}
                   />
+
                   <textarea
                     rows={4}
                     className={
@@ -1368,13 +1320,17 @@ export default function Portfolio() {
                     }
                     placeholder={t.contact.form.message}
                   />
+
                   <Button
                     variant="primary"
                     tone={dark ? "dark" : "light"}
                     className="justify-center"
+                    hoverLift
+                    reduceMotion={!!reduceMotion}
                   >
                     {t.contact.form.send} <ArrowRight size={16} />
                   </Button>
+
                   <p className={"text-[11px] leading-relaxed " + muted}>
                     {t.contact.form.note}
                   </p>
