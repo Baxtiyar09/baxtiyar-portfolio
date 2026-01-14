@@ -26,6 +26,7 @@ type Project = {
   title: string;
   description: string;
   tech: string[];
+  features?: string[]; // bunu əlavə et
   link?: string;
   status?: "Live" | "In progress" | "Coming soon";
 };
@@ -1181,6 +1182,35 @@ export default function Portfolio() {
                     {p.description}
                   </motion.p>
 
+                  {/* Key Features (minimal) */}
+                  {p.features?.length ? (
+                    <motion.div layout="position" className="mt-4">
+                      <div
+                        className={
+                          "text-xs font-medium tracking-wide mb-2 " +
+                          (dark ? "text-white/60" : "text-black/55")
+                        }
+                      >
+                        {lang === "en" ? "Key features" : "Əsas xüsusiyyətlər"}
+                      </div>
+
+                      <ul className="space-y-1">
+                        {p.features.map((feature) => (
+                          <li
+                            key={feature}
+                            className={
+                              "text-xs leading-relaxed flex gap-2 " +
+                              (dark ? "text-white/55" : "text-black/55")
+                            }
+                          >
+                            <span className="opacity-60">–</span>
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  ) : null}
+
                   <motion.div layout="position" className="mt-4 flex flex-wrap gap-2">
                     {p.tech.map((tech) => (
                       <Pill tone={dark ? "dark" : "light"} key={tech}>
@@ -1213,6 +1243,7 @@ export default function Portfolio() {
             ))}
           </motion.div>
         </motion.section>
+
 
         {/* CONTACT */}
         <motion.section
