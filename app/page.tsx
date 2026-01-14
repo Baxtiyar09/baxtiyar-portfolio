@@ -45,9 +45,8 @@ const SectionTitle = ({
     </h2>
     {subtitle ? (
       <p
-        className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${
-          subtitleClass ?? "text-white/60"
-        }`}
+        className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${subtitleClass ?? "text-white/60"
+          }`}
       >
         {subtitle}
       </p>
@@ -118,8 +117,8 @@ const Button = ({
         ? "bg-white text-black hover:bg-white/90"
         : "bg-black text-white hover:bg-black/90"
       : tone === "dark"
-      ? "border border-white/15 bg-white/5 text-white hover:bg-white/10"
-      : "border border-black/15 bg-black/5 text-black hover:bg-black/10";
+        ? "border border-white/15 bg-white/5 text-white hover:bg-white/10"
+        : "border border-black/15 bg-black/5 text-black hover:bg-black/10";
 
   const isHashLink = typeof href === "string" && href.startsWith("#");
   const isExternal = typeof href === "string" && /^https?:\/\//.test(href);
@@ -171,24 +170,29 @@ function useActiveSection(ids: string[]) {
 
 /** ---------- Motion helpers (performans-friendly) ---------- */
 const makeReveal = (reduce: boolean): Variants => ({
-  hidden: { opacity: 0, y: reduce ? 0 : 18 },
+  hidden: { opacity: 0, y: reduce ? 0 : 22 },
   show: {
     opacity: 1,
     y: 0,
     transition: reduce
       ? { duration: 0.01 }
-      : { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+      : { duration: 0.9, ease: [0.16, 1, 0.3, 1] }, // daha yavaş
   },
 });
 
-const makeStagger = (reduce: boolean, stagger = 0.08): Variants => ({
+
+const makeStagger = (reduce: boolean, stagger = 0.12): Variants => ({
   hidden: {},
   show: {
     transition: reduce
       ? { duration: 0.01 }
-      : { staggerChildren: stagger, delayChildren: 0.05 },
+      : {
+        staggerChildren: stagger, // uşaq elementlər daha gec-gec gəlir
+        delayChildren: 0.18,      // əvvəl biraz gözləsin
+      },
   },
 });
+
 
 /** ---------- Skill Row (bar soldan-sağa dolur) ---------- */
 function SkillRow({
@@ -233,7 +237,7 @@ function SkillRow({
           transition={
             reduceMotion
               ? { duration: 0.01 }
-              : { duration: 0.9, ease: [0.16, 1, 0.3, 1] }
+              : { duration: 1.35, ease: [0.16, 1, 0.3, 1] }
           }
         />
       </div>
@@ -395,17 +399,17 @@ export default function Portfolio() {
       focus:
         lang === "en"
           ? [
-              "MVVM & Clean Architecture",
-              "Async programming (Coroutines, Flow)",
-              "REST API integration",
-              "Working with new technologies",
-            ]
+            "MVVM & Clean Architecture",
+            "Async programming (Coroutines, Flow)",
+            "REST API integration",
+            "Working with new technologies",
+          ]
           : [
-              "MVVM & Clean Architecture",
-              "Asinxron proqramlaşdırma (Coroutines, Flow)",
-              "REST API inteqrasiyası",
-              "Yeni texnologiyalarla işləmək",
-            ],
+            "MVVM & Clean Architecture",
+            "Asinxron proqramlaşdırma (Coroutines, Flow)",
+            "REST API inteqrasiyası",
+            "Yeni texnologiyalarla işləmək",
+          ],
       contact: {
         email: "baxtiyaralizada1@gmail.com",
         phone: "077 333 98 31",
@@ -520,7 +524,7 @@ export default function Portfolio() {
   // motion variants
   const reveal = makeReveal(!!reduceMotion);
   const stagger = makeStagger(!!reduceMotion, 0.085);
-  const heroStagger = makeStagger(!!reduceMotion, 0.09);
+  const heroStagger = makeStagger(!!reduceMotion, 0.14);
 
   return (
     <div className={`min-h-screen ${bg}`}>
@@ -566,8 +570,8 @@ export default function Portfolio() {
                         ? "text-white"
                         : "text-black"
                       : dark
-                      ? "text-white/60 hover:text-white"
-                      : "text-black/55 hover:text-black")
+                        ? "text-white/60 hover:text-white"
+                        : "text-black/55 hover:text-black")
                   }
                 >
                   <span
@@ -665,10 +669,10 @@ export default function Portfolio() {
                         reduceMotion
                           ? undefined
                           : {
-                              duration: 1.1,
-                              repeat: Infinity,
-                              ease: [0.4, 0, 0.2, 1],
-                            }
+                            duration: 1.1,
+                            repeat: Infinity,
+                            ease: [0.4, 0, 0.2, 1],
+                          }
                       }
                       className="inline-flex"
                     >
@@ -730,10 +734,10 @@ export default function Portfolio() {
                       reduceMotion
                         ? undefined
                         : {
-                            duration: 1.1,
-                            repeat: Infinity,
-                            ease: [0.4, 0, 0.2, 1],
-                          }
+                          duration: 1.1,
+                          repeat: Infinity,
+                          ease: [0.4, 0, 0.2, 1],
+                        }
                     }
                     className="inline-flex"
                   >
@@ -766,21 +770,21 @@ export default function Portfolio() {
                     reduceMotion
                       ? undefined
                       : {
-                          rotate: cvOpen ? 180 : 0,
-                          y: cvOpen ? 0 : [0, 4, 0],
-                        }
+                        rotate: cvOpen ? 180 : 0,
+                        y: cvOpen ? 0 : [0, 4, 0],
+                      }
                   }
                   transition={
                     reduceMotion
                       ? undefined
                       : {
-                          rotate: { duration: 0.18 },
-                          y: {
-                            duration: 1.2,
-                            repeat: cvOpen ? 0 : Infinity,
-                            ease: [0.4, 0, 0.2, 1],
-                          },
-                        }
+                        rotate: { duration: 0.18 },
+                        y: {
+                          duration: 1.2,
+                          repeat: cvOpen ? 0 : Infinity,
+                          ease: [0.4, 0, 0.2, 1],
+                        },
+                      }
                   }
                   className="inline-flex"
                 >
@@ -855,7 +859,7 @@ export default function Portfolio() {
           variants={stagger}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.3 }}
           className="py-20"
         >
           <motion.div variants={reveal}>
@@ -952,7 +956,7 @@ export default function Portfolio() {
           variants={stagger}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.3 }}
           className="py-20"
         >
           <motion.div variants={reveal}>
@@ -1042,7 +1046,7 @@ export default function Portfolio() {
           variants={stagger}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.3 }}
           className="py-20"
         >
           <motion.div variants={reveal}>
@@ -1126,7 +1130,7 @@ export default function Portfolio() {
           variants={stagger}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.3 }}
           className="py-20"
         >
           <motion.div variants={reveal}>
