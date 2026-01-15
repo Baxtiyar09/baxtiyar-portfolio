@@ -1043,26 +1043,28 @@ export default function Portfolio() {
                 </div>
               </Card>
             </motion.div>
-          </div>
-          
-          {/* Tools I use */}
-          <div className="mt-6">
-            <div className={"text-[11px] uppercase tracking-[0.18em] mb-2 " + muted}>
-              Tools I use
-            </div>
 
-            <div className="flex flex-wrap gap-2">
-              {tools.map((tool) => (
-                <Pill
-                  key={tool}
-                  tone={dark ? "dark" : "light"}
-                  hoverInvert
-                >
-                  {tool}
-                </Pill>
-              ))}
+            {/* Tools I use */}
+            <div className="mt-6">
+              <div className={"text-[11px] uppercase tracking-[0.18em] mb-2 " + muted}>
+                Tools I use
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {tools.map((tool) => (
+                  <Pill
+                    key={tool}
+                    tone={dark ? "dark" : "light"}
+                    hoverInvert
+                  >
+                    {tool}
+                  </Pill>
+                ))}
+              </div>
             </div>
           </div>
+
+
 
           {/* ✅ Stats card: iki kartın altına ayrıca */}
           <motion.div variants={reveal} className="mt-6">
