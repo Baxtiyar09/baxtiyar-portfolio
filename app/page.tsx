@@ -28,7 +28,7 @@ type Project = {
   tech: string[];
   link?: string;
   status?: "Live" | "In progress" | "Coming soon";
-  features?: string[]; // ✅ Key features
+  features?: string[];
 };
 
 /** ---------- UI small components ---------- */
@@ -72,10 +72,8 @@ const Pill = ({
   const darkStyle = "border-white/10 bg-white/5 text-white/80";
   const lightStyle = "border-black/10 bg-black/5 text-black/70";
 
-  const invertDark =
-    "hover:bg-white hover:text-black hover:border-white/30";
-  const invertLight =
-    "hover:bg-black hover:text-white hover:border-black/30";
+  const invertDark = "hover:bg-white hover:text-black hover:border-white/30";
+  const invertLight = "hover:bg-black hover:text-white hover:border-black/30";
 
   return (
     <span
@@ -113,11 +111,7 @@ const Card = ({
     <motion.div
       layout={enableLayout ? true : undefined}
       className={base}
-      whileHover={
-        hoverLift && !reduceMotion
-          ? { y: -4 }
-          : undefined
-      }
+      whileHover={hoverLift && !reduceMotion ? { y: -4 } : undefined}
       transition={{ duration: 0.18 }}
     >
       {children}
@@ -171,11 +165,7 @@ const Button = ({
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noreferrer" : undefined}
       className={`${base} ${styles} ${className}`}
-      whileHover={
-        hoverLift && !reduceMotion
-          ? { y: -3 }
-          : undefined
-      }
+      whileHover={hoverLift && !reduceMotion ? { y: -3 } : undefined}
       transition={{ duration: 0.18 }}
     >
       {children}
@@ -278,15 +268,6 @@ function SkillRow({
   );
 }
 
-/** ---------- Arrow hover (Contact list) ---------- */
-const arrowVariants: Variants = {
-  rest: { x: 0 },
-  hover: {
-    x: [0, 6, 0],
-    transition: { duration: 0.9, repeat: Infinity, ease: "easeInOut" },
-  },
-};
-
 export default function Portfolio() {
   const reduceMotion = useReducedMotion();
 
@@ -295,6 +276,15 @@ export default function Portfolio() {
 
   const [cvOpen, setCvOpen] = useState(false);
   const cvRef = useRef<HTMLDivElement | null>(null);
+
+  /** ✅ Refresh olanda həmişə Home-dan başlasın */
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
 
   React.useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -512,16 +502,8 @@ export default function Portfolio() {
         link: "https://github.com/Baxtiyar09/moviesApp",
         features:
           lang === "en"
-            ? [
-                "Search + quick filtering",
-                "Favorites / watchlist flow",
-                "Detail screen with cast info",
-              ]
-            : [
-                "Axtarış + sürətli filter",
-                "Seçilmişlər / izləmə siyahısı",
-                "Detallar + aktyorlar bölməsi",
-              ],
+            ? ["Search + quick filtering", "Favorites / watchlist flow", "Detail screen with cast info"]
+            : ["Axtarış + sürətli filter", "Seçilmişlər / izləmə siyahısı", "Detallar + aktyorlar bölməsi"],
       },
       {
         title: "HeyatYolu",
@@ -533,16 +515,8 @@ export default function Portfolio() {
         tech: ["Kotlin", "MVVM", "Backend API", "Authentication"],
         features:
           lang === "en"
-            ? [
-                "Secure sign-in & sessions",
-                "Media upload + preview",
-                "Role-based content access",
-              ]
-            : [
-                "Giriş (auth) + sessiya idarəsi",
-                "Media əlavə etmə + preview",
-                "İcazələrə görə kontent erişimi",
-              ],
+            ? ["Secure sign-in & sessions", "Media upload + preview", "Role-based content access"]
+            : ["Giriş (auth) + sessiya idarəsi", "Media əlavə etmə + preview", "İcazələrə görə kontent erişimi"],
       },
       {
         title: "Herrac",
@@ -554,16 +528,8 @@ export default function Portfolio() {
         tech: ["Clean Architecture", "Performance", "Modern UI"],
         features:
           lang === "en"
-            ? [
-                "Product listing + categories",
-                "Cart & checkout concept",
-                "Offline-friendly caching plan",
-              ]
-            : [
-                "Məhsul siyahısı + kateqoriyalar",
-                "Səbət + checkout konsepti",
-                "Offline cache planı",
-              ],
+            ? ["Product listing + categories", "Cart & checkout concept", "Offline-friendly caching plan"]
+            : ["Məhsul siyahısı + kateqoriyalar", "Səbət + checkout konsepti", "Offline cache planı"],
       },
       {
         title: "Astrology App",
@@ -575,16 +541,8 @@ export default function Portfolio() {
         tech: ["REST API", "Kotlin", "Modern UI"],
         features:
           lang === "en"
-            ? [
-                "Daily / weekly cards",
-                "Shareable insight snippets",
-                "Saved sign preferences",
-              ]
-            : [
-                "Gündəlik / həftəlik kartlar",
-                "Paylaşılabilən qısa mətnlər",
-                "Seçilmiş bürclər yadda saxlanır",
-              ],
+            ? ["Daily / weekly cards", "Shareable insight snippets", "Saved sign preferences"]
+            : ["Gündəlik / həftəlik kartlar", "Paylaşılabilən qısa mətnlər", "Seçilmiş bürclər yadda saxlanır"],
       },
     ],
     [lang]
@@ -716,7 +674,7 @@ export default function Portfolio() {
 
       {/* Content */}
       <div className="relative mx-auto max-w-6xl px-5 pt-28 pb-16">
-        {/* HERO (on load: smooth stagger) */}
+        {/* HERO */}
         <section id="home" className="min-h-[78vh] grid place-items-center">
           <motion.div
             variants={heroStagger}
@@ -886,7 +844,11 @@ export default function Portfolio() {
                       ? undefined
                       : {
                           rotate: { duration: 0.18 },
-                          y: { duration: 1.2, repeat: cvOpen ? 0 : Infinity, ease: [0.4, 0, 0.2, 1] },
+                          y: {
+                            duration: 1.2,
+                            repeat: cvOpen ? 0 : Infinity,
+                            ease: [0.4, 0, 0.2, 1],
+                          },
                         }
                   }
                   className="inline-flex"
@@ -957,12 +919,17 @@ export default function Portfolio() {
             <SectionTitle title={t.about.title} subtitle={t.about.subtitle} subtitleClass={muted} />
           </motion.div>
 
+          {/* ✅ About pills: hover invert */}
           <motion.div
             variants={reveal}
             className="mt-6 mb-10 flex flex-wrap items-center justify-center gap-2"
           >
             {profile.focus.map((f) => (
-              <Pill tone={dark ? "dark" : "light"} key={f}>
+              <Pill
+                tone={dark ? "dark" : "light"}
+                hoverInvert
+                key={f}
+              >
                 {f}
               </Pill>
             ))}
@@ -970,11 +937,7 @@ export default function Portfolio() {
 
           <div className="grid lg:grid-cols-3 gap-6">
             <motion.div variants={reveal} className="lg:col-span-2">
-              <Card
-                reduceMotion={!!reduceMotion}
-                hoverLift
-                className="p-6"
-              >
+              <Card reduceMotion={!!reduceMotion} hoverLift className="p-6">
                 <p className={"text-sm leading-relaxed " + muted}>{profile.about}</p>
 
                 <motion.div variants={stagger} className="mt-6 grid sm:grid-cols-2 gap-4">
@@ -1003,11 +966,7 @@ export default function Portfolio() {
             </motion.div>
 
             <motion.div variants={reveal}>
-              <Card
-                reduceMotion={!!reduceMotion}
-                hoverLift
-                className="p-6"
-              >
+              <Card reduceMotion={!!reduceMotion} hoverLift className="p-6">
                 <div className="text-sm font-medium">{t.about.journeyTitle}</div>
                 <p className={"mt-2 text-sm leading-relaxed " + muted}>{t.about.journeyText}</p>
                 <div className="mt-5 grid gap-3">
@@ -1062,47 +1021,46 @@ export default function Portfolio() {
               <Card className="p-6" reduceMotion={!!reduceMotion}>
                 <div className="text-sm font-medium mb-4">{t.skills.stack}</div>
 
-                {/* Pills: hover invert */}
                 <div className="flex flex-wrap gap-2">
                   {techTags.map((tag) => (
-                    <Pill
-                      key={tag}
-                      tone={dark ? "dark" : "light"}
-                      hoverInvert
-                    >
+                    <Pill key={tag} tone={dark ? "dark" : "light"} hoverInvert>
                       {tag}
                     </Pill>
                   ))}
                 </div>
-
-                {/* Stats: hover scale */}
-                <div
-                  className={
-                    "mt-6 rounded-2xl border p-5 text-center " +
-                    (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
-                  }
-                >
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { big: "Junior", small: t.skills.stat1 },
-                      { big: "4+", small: t.skills.stat2 },
-                      { big: "100%", small: t.skills.stat3 },
-                    ].map((s) => (
-                      <motion.div
-                        key={s.big}
-                        whileHover={!reduceMotion ? { scale: 1.06 } : undefined}
-                        transition={{ duration: 0.18 }}
-                        className="cursor-default"
-                      >
-                        <div className="text-2xl font-semibold">{s.big}</div>
-                        <div className={"text-xs mt-1 " + muted}>{s.small}</div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
               </Card>
             </motion.div>
           </div>
+
+          {/* ✅ Stats card: iki kartın altına ayrıca */}
+          <motion.div variants={reveal} className="mt-6">
+            <Card className="p-5" reduceMotion={!!reduceMotion}>
+              <div
+                className={
+                  "rounded-2xl border p-5 text-center " +
+                  (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
+                }
+              >
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { big: "Junior", small: t.skills.stat1 },
+                    { big: "4+", small: t.skills.stat2 },
+                    { big: "100%", small: t.skills.stat3 },
+                  ].map((s) => (
+                    <motion.div
+                      key={s.big}
+                      whileHover={!reduceMotion ? { scale: 1.06 } : undefined}
+                      transition={{ duration: 0.18 }}
+                      className="cursor-default"
+                    >
+                      <div className="text-2xl font-semibold">{s.big}</div>
+                      <div className={"text-xs mt-1 " + muted}>{s.small}</div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </motion.div>
         </motion.section>
 
         {/* PROJECTS */}
@@ -1151,7 +1109,6 @@ export default function Portfolio() {
                     {p.description}
                   </motion.p>
 
-                  {/* ✅ Key features (minimal) */}
                   {p.features?.length ? (
                     <motion.div layout="position" className="mt-4">
                       <div className={"text-[11px] uppercase tracking-[0.18em] " + muted}>
@@ -1168,9 +1125,14 @@ export default function Portfolio() {
                     </motion.div>
                   ) : null}
 
+                  {/* ✅ Project tech pills: hover invert */}
                   <motion.div layout="position" className="mt-4 flex flex-wrap gap-2">
                     {p.tech.map((tech) => (
-                      <Pill tone={dark ? "dark" : "light"} key={tech}>
+                      <Pill
+                        tone={dark ? "dark" : "light"}
+                        hoverInvert
+                        key={tech}
+                      >
                         {tech}
                       </Pill>
                     ))}
@@ -1243,14 +1205,11 @@ export default function Portfolio() {
                       external: true,
                     },
                   ].map((item) => (
-                    <motion.a
+                    <a
                       key={item.label}
                       href={item.href}
                       target={item.external ? "_blank" : undefined}
                       rel={item.external ? "noreferrer" : undefined}
-                      initial="rest"
-                      whileHover="hover"
-                      animate="rest"
                       className={
                         "flex items-center justify-between rounded-xl border p-4 transition " +
                         (dark
@@ -1262,13 +1221,23 @@ export default function Portfolio() {
                         {item.icon} {item.label}
                       </span>
 
+                      {/* ✅ Ox default hərəkət etsin (hover yox) */}
                       <motion.span
-                        variants={reduceMotion ? { rest: { x: 0 }, hover: { x: 0 } } : arrowVariants}
                         className={muted}
+                        animate={
+                          reduceMotion
+                            ? { x: 0 }
+                            : { x: [0, 6, 0] }
+                        }
+                        transition={
+                          reduceMotion
+                            ? { duration: 0.01 }
+                            : { duration: 0.9, repeat: Infinity, ease: "easeInOut" }
+                        }
                       >
                         <ArrowRight size={16} />
                       </motion.span>
-                    </motion.a>
+                    </a>
                   ))}
                 </div>
 
