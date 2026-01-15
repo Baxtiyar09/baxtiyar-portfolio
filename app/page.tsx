@@ -48,9 +48,8 @@ const SectionTitle = ({
     </h2>
     {subtitle ? (
       <p
-        className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${
-          subtitleClass ?? "text-white/60"
-        }`}
+        className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${subtitleClass ?? "text-white/60"
+          }`}
       >
         {subtitle}
       </p>
@@ -147,8 +146,8 @@ const Button = ({
         ? "bg-white text-black hover:bg-white/90"
         : "bg-black text-white hover:bg-black/90"
       : tone === "dark"
-      ? "border border-white/15 bg-white/5 text-white hover:bg-white/10"
-      : "border border-black/15 bg-black/5 text-black hover:bg-black/10";
+        ? "border border-white/15 bg-white/5 text-white hover:bg-white/10"
+        : "border border-black/15 bg-black/5 text-black hover:bg-black/10";
 
   const isHashLink = typeof href === "string" && href.startsWith("#");
   const isExternal = typeof href === "string" && /^https?:\/\//.test(href);
@@ -433,17 +432,17 @@ export default function Portfolio() {
       focus:
         lang === "en"
           ? [
-              "MVVM & Clean Architecture",
-              "Async programming (Coroutines, Flow)",
-              "REST API integration",
-              "Working with new technologies",
-            ]
+            "MVVM & Clean Architecture",
+            "Async programming (Coroutines, Flow)",
+            "REST API integration",
+            "Working with new technologies",
+          ]
           : [
-              "MVVM & Clean Architecture",
-              "Asinxron proqramlaşdırma (Coroutines, Flow)",
-              "REST API inteqrasiyası",
-              "Yeni texnologiyalarla işləmək",
-            ],
+            "MVVM & Clean Architecture",
+            "Asinxron proqramlaşdırma (Coroutines, Flow)",
+            "REST API inteqrasiyası",
+            "Yeni texnologiyalarla işləmək",
+          ],
       contact: {
         email: "baxtiyaralizada1@gmail.com",
         phone: "077 333 98 31",
@@ -622,8 +621,8 @@ export default function Portfolio() {
                         ? "text-white"
                         : "text-black"
                       : dark
-                      ? "text-white/60 hover:text-white"
-                      : "text-black/55 hover:text-black")
+                        ? "text-white/60 hover:text-white"
+                        : "text-black/55 hover:text-black")
                   }
                 >
                   <span
@@ -843,13 +842,13 @@ export default function Portfolio() {
                     reduceMotion
                       ? undefined
                       : {
-                          rotate: { duration: 0.18 },
-                          y: {
-                            duration: 1.2,
-                            repeat: cvOpen ? 0 : Infinity,
-                            ease: [0.4, 0, 0.2, 1],
-                          },
-                        }
+                        rotate: { duration: 0.18 },
+                        y: {
+                          duration: 1.2,
+                          repeat: cvOpen ? 0 : Infinity,
+                          ease: [0.4, 0, 0.2, 1],
+                        },
+                      }
                   }
                   className="inline-flex"
                 >
@@ -1204,7 +1203,7 @@ export default function Portfolio() {
                       icon: <Linkedin size={16} />,
                       external: true,
                     },
-                  ].map((item) => (
+                  ].map((item, idx) => (
                     <a
                       key={item.label}
                       href={item.href}
@@ -1221,24 +1220,26 @@ export default function Portfolio() {
                         {item.icon} {item.label}
                       </span>
 
-                      {/* ✅ Ox default hərəkət etsin (hover yox) */}
                       <motion.span
                         className={muted}
-                        animate={
-                          reduceMotion
-                            ? { x: 0 }
-                            : { x: [0, 6, 0] }
-                        }
+                        animate={reduceMotion ? { x: 0 } : { x: [0, 6, 0] }}
                         transition={
                           reduceMotion
                             ? { duration: 0.01 }
-                            : { duration: 0.9, repeat: Infinity, ease: "easeInOut" }
+                            : {
+                              duration: 0.9,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                              delay: idx * 0.18,
+                              repeatDelay: 0.35,
+                            }
                         }
                       >
                         <ArrowRight size={16} />
                       </motion.span>
                     </a>
                   ))}
+
                 </div>
 
                 <div className={"mt-6 text-xs " + muted}>
