@@ -1243,7 +1243,7 @@ export default function Portfolio() {
                       icon: <Linkedin size={16} />,
                       external: true,
                     },
-                  ].map((item, idx) => (
+                  ].map((item, index) => (
                     <a
                       key={item.label}
                       href={item.href}
@@ -1260,6 +1260,7 @@ export default function Portfolio() {
                         {item.icon} {item.label}
                       </span>
 
+                      {/* ➜ Ardıcıl ox animasiyası */}
                       <motion.span
                         className={muted}
                         animate={reduceMotion ? { x: 0 } : { x: [0, 6, 0] }}
@@ -1270,8 +1271,7 @@ export default function Portfolio() {
                               duration: 0.9,
                               repeat: Infinity,
                               ease: "easeInOut",
-                              delay: idx * 0.18,
-                              repeatDelay: 0.35,
+                              delay: index * 0.12, // ✅ 0s / 0.12s / 0.24s
                             }
                         }
                       >
@@ -1279,6 +1279,7 @@ export default function Portfolio() {
                       </motion.span>
                     </a>
                   ))}
+
 
                 </div>
 
@@ -1338,14 +1339,19 @@ export default function Portfolio() {
                     reduceMotion={!!reduceMotion}
                   >
                     {t.contact.form.send}
+
                     <motion.span
-                      aria-hidden
-                      className="inline-flex"
+                      className="ml-2 inline-flex"
                       animate={reduceMotion ? { x: 0 } : { x: [0, 6, 0] }}
                       transition={
                         reduceMotion
                           ? { duration: 0.01 }
-                          : { duration: 0.9, repeat: Infinity, ease: "easeInOut" }
+                          : {
+                            duration: 0.9,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            delay: 0.36, // ✅ ən sonda
+                          }
                       }
                     >
                       <ArrowRight size={16} />
