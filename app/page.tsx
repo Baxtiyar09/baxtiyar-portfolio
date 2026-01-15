@@ -1046,9 +1046,10 @@ export default function Portfolio() {
 
                 {/* Tools I use */}
                 <div className="mt-6">
-                  <div className={"text-[11px] uppercase tracking-[0.18em] mb-2 " + muted}>
-                    Tools I use
+                  <div className="text-sm font-medium mt-4">
+                    {t.skills.tools}
                   </div>
+
 
                   <div className="flex flex-wrap gap-2">
                     {tools.map((tool) => (
@@ -1329,7 +1330,6 @@ export default function Portfolio() {
                     }
                     placeholder={t.contact.form.message}
                   />
-
                   <Button
                     variant="primary"
                     tone={dark ? "dark" : "light"}
@@ -1337,8 +1337,21 @@ export default function Portfolio() {
                     hoverLift
                     reduceMotion={!!reduceMotion}
                   >
-                    {t.contact.form.send} <ArrowRight size={16} />
+                    {t.contact.form.send}
+                    <motion.span
+                      aria-hidden
+                      className="inline-flex"
+                      animate={reduceMotion ? { x: 0 } : { x: [0, 6, 0] }}
+                      transition={
+                        reduceMotion
+                          ? { duration: 0.01 }
+                          : { duration: 0.9, repeat: Infinity, ease: "easeInOut" }
+                      }
+                    >
+                      <ArrowRight size={16} />
+                    </motion.span>
                   </Button>
+
 
                   <p className={"text-[11px] leading-relaxed " + muted}>
                     {t.contact.form.note}
