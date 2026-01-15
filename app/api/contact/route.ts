@@ -16,14 +16,16 @@ export async function POST(req: Request) {
 
         const RESEND_API_KEY = process.env.RESEND_API_KEY;
         const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "baxtiyaralizada1@gmail.com";
-        const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL; // Resend-də verify olunmuş domen/from lazımdır
+        const FROM_EMAIL = "Portfolio <onboarding@resend.dev>";
 
-        if (!RESEND_API_KEY || !FROM_EMAIL) {
+
+        if (!RESEND_API_KEY) {
             return NextResponse.json(
                 { error: "Server email is not configured." },
                 { status: 500 }
             );
         }
+
 
         const subject = `Portfolio message from ${name}`;
         const html = `
@@ -46,7 +48,7 @@ export async function POST(req: Request) {
                 to: [TO_EMAIL],
                 subject,
                 html,
-                reply_to: email,
+                replyTo: email,
             }),
         });
 
