@@ -325,6 +325,7 @@ export default function Portfolio() {
         subtitle: "Main technologies I use to build Android applications.",
         core: "Core Expertise",
         stack: "Technology Stack",
+        tools: "Tools I use", // ✅ ƏLAVƏ ETDİM
         stat1: "Level",
         stat2: "Projects",
         stat3: "Learning",
@@ -386,6 +387,7 @@ export default function Portfolio() {
         subtitle: "Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar.",
         core: "Əsas Bacarıqlar",
         stack: "Texnologiya Stack",
+        tools: "İstifadə etdiyim alətlər", // ✅ AZ tərcümə
         stat1: "Səviyyə",
         stat2: "Layihə",
         stat3: "Öyrənmə",
