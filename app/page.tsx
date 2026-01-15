@@ -276,6 +276,24 @@ export default function Portfolio() {
   const [cvOpen, setCvOpen] = useState(false);
   const cvRef = useRef<HTMLDivElement | null>(null);
 
+  // ✅ Contact form state
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string; server?: string }>({});
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const validateEmail = (v: string) => /^\S+@\S+\.\S+$/.test(v);
+
+  const validateForm = () => {
+    const e: typeof errors = {};
+    if (!form.name.trim()) e.name = lang === "en" ? "Name is required." : "Ad vacibdir.";
+    if (!form.email.trim()) e.email = lang === "en" ? "Email is required." : "Email vacibdir.";
+    else if (!validateEmail(form.email.trim())) e.email = lang === "en" ? "Enter a valid email." : "Düzgün email daxil et.";
+    if (!form.message.trim()) e.message = lang === "en" ? "Message is required." : "Mesaj vacibdir.";
+    return e;
+  };
+
+
   /** ✅ Refresh olanda həmişə Home-dan başlasın */
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1295,69 +1313,169 @@ export default function Portfolio() {
 
                 <form
                   className="mt-5 grid gap-3"
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
-                    alert(t.contact.form.alert);
+                    setSent(false);
+
+                    const eMap = validateForm();
+                    if (Object.keys(eMap).length) {
+                      setErrors(eMap);
+                      return;
+                    }
+
+                    setErrors({});
+                    setSending(true);
+
+                    try {
+                      const res = await fetch("/api/contact", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          name: form.name.trim(),
+                          email: form.email.trim(),
+                          message: form.message.trim(),
+                        }),
+                      });
+
+                      const data = await res.json().catch(() => ({}));
+
+                      if (!res.ok) {
+                        setErrors({
+                          server:
+                            (data?.error as string) ||
+                            (lang === "en"
+                              ? "Failed to send. Try again."
+                              : "Göndərilmədi. Yenidən yoxla."),
+                        });
+                        return;
+                      }
+
+                      // ✅ success
+                      setSent(true);
+                      setForm({ name: "", email: "", message: "" });
+                    } catch {
+                      setErrors({
+                        server: lang === "en" ? "Network error. Try again." : "Şəbəkə xətası. Yenidən yoxla.",
+                      });
+                    } finally {
+                      setSending(false);
+                    }
                   }}
                 >
-                  <input
-                    className={
-                      "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
-                      (dark
-                        ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
-                        : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
-                    }
-                    placeholder={t.contact.form.name}
-                  />
+                  <div>
+                    <input
+                      value={form.name}
+                      onChange={(e) => {
+                        setForm((p) => ({ ...p, name: e.target.value }));
+                        setErrors((p) => ({ ...p, name: undefined, server: undefined }));
+                        setSent(false);
+                      }}
+                      className={
+                        "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
+                        (errors.name
+                          ? "border-red-500/70 focus:border-red-500"
+                          : dark
+                            ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
+                            : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
+                      }
+                      placeholder={t.contact.form.name}
+                    />
+                    {errors.name ? (
+                      <div className="mt-1 text-[11px] text-red-400">{errors.name}</div>
+                    ) : null}
+                  </div>
 
-                  <input
-                    type="email"
-                    className={
-                      "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
-                      (dark
-                        ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
-                        : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
-                    }
-                    placeholder={t.contact.form.email}
-                  />
+                  <div>
+                    <input
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => {
+                        setForm((p) => ({ ...p, email: e.target.value }));
+                        setErrors((p) => ({ ...p, email: undefined, server: undefined }));
+                        setSent(false);
+                      }}
+                      className={
+                        "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
+                        (errors.email
+                          ? "border-red-500/70 focus:border-red-500"
+                          : dark
+                            ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
+                            : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
+                      }
+                      placeholder={t.contact.form.email}
+                    />
+                    {errors.email ? (
+                      <div className="mt-1 text-[11px] text-red-400">{errors.email}</div>
+                    ) : null}
+                  </div>
 
-                  <textarea
-                    rows={4}
-                    className={
-                      "w-full rounded-xl border px-4 py-3 text-sm outline-none transition resize-none " +
-                      (dark
-                        ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
-                        : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
-                    }
-                    placeholder={t.contact.form.message}
-                  />
+                  <div>
+                    <textarea
+                      rows={4}
+                      value={form.message}
+                      onChange={(e) => {
+                        setForm((p) => ({ ...p, message: e.target.value }));
+                        setErrors((p) => ({ ...p, message: undefined, server: undefined }));
+                        setSent(false);
+                      }}
+                      className={
+                        "w-full rounded-xl border px-4 py-3 text-sm outline-none transition resize-none " +
+                        (errors.message
+                          ? "border-red-500/70 focus:border-red-500"
+                          : dark
+                            ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
+                            : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
+                      }
+                      placeholder={t.contact.form.message}
+                    />
+                    {errors.message ? (
+                      <div className="mt-1 text-[11px] text-red-400">{errors.message}</div>
+                    ) : null}
+                  </div>
+
+                  {/* server error / success */}
+                  {errors.server ? (
+                    <div
+                      className={
+                        "rounded-xl border px-4 py-3 text-sm " +
+                        (dark ? "border-red-500/20 bg-red-500/10 text-red-200" : "border-red-500/30 bg-red-50 text-red-700")
+                      }
+                    >
+                      {errors.server}
+                    </div>
+                  ) : null}
+
+                  {sent ? (
+                    <div
+                      className={
+                        "rounded-xl border px-4 py-3 text-sm " +
+                        (dark ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200" : "border-emerald-500/30 bg-emerald-50 text-emerald-700")
+                      }
+                    >
+                      {lang === "en" ? "Message sent successfully." : "Mesaj uğurla göndərildi."}
+                    </div>
+                  ) : null}
+
                   <Button
                     variant="primary"
                     tone={dark ? "dark" : "light"}
-                    className="justify-center"
+                    className={"justify-center " + (sending ? "opacity-80 pointer-events-none" : "")}
                     hoverLift
                     reduceMotion={!!reduceMotion}
                   >
-                    {t.contact.form.send}
-
+                    {sending ? (lang === "en" ? "Sending..." : "Göndərilir...") : t.contact.form.send}
                     <motion.span
                       className="ml-2 inline-flex"
                       animate={reduceMotion ? { x: 0 } : { x: [0, 6, 0] }}
                       transition={
                         reduceMotion
                           ? { duration: 0.01 }
-                          : {
-                            duration: 0.9,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                            delay: 0.36, // ✅ ən sonda
-                          }
+                          : { duration: 0.9, repeat: Infinity, ease: "easeInOut", delay: 0.36 }
                       }
                     >
                       <ArrowRight size={16} />
                     </motion.span>
                   </Button>
-
 
                   <p className={"text-[11px] leading-relaxed " + muted}>
                     {t.contact.form.note}
