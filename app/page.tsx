@@ -1673,7 +1673,6 @@ export default function Portfolio() {
 
                     <div>
                       <textarea
-                        rowsrow
                         rows={4}
                         value={form.message}
                         onChange={(e) => {
