@@ -22,7 +22,6 @@ import {
   Phone,
   MapPin,
   Languages,
-  Download,
 } from "lucide-react";
 
 type Lang = "en" | "az";
@@ -36,21 +35,6 @@ type Project = {
   features?: string[];
 };
 
-/** ---------- small helpers ---------- */
-function useMdUp() {
-  const [mdUp, setMdUp] = React.useState(false);
-
-  React.useEffect(() => {
-    const mql = window.matchMedia("(min-width: 768px)");
-    const onChange = () => setMdUp(mql.matches);
-    onChange();
-    mql.addEventListener?.("change", onChange);
-    return () => mql.removeEventListener?.("change", onChange);
-  }, []);
-
-  return mdUp;
-}
-
 /** ---------- UI small components ---------- */
 
 const SectionTitle = ({
@@ -63,9 +47,7 @@ const SectionTitle = ({
   subtitleClass?: string;
 }) => (
   <div className="text-center mb-10">
-    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-      {title}
-    </h2>
+    <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">{title}</h2>
     {subtitle ? (
       <p
         className={`mt-3 text-sm md:text-base max-w-2xl mx-auto ${subtitleClass ?? "text-white/60"
@@ -109,11 +91,11 @@ const Pill = ({
 };
 
 /**
- * ✅ Card FIX:
- * - iOS Safari scroll blur artifact fix: mobile-də backdrop-blur OFF
- * - Light mode card body ilə qarışmasın: daha seçilən bg + shadow
- * - border yoxdur
- * - hover shadow yumşaq (desktop/tablet)
+ * ✅ Card (fix):
+ * - border YOX (cərçivə görünmür)
+ * - light mode mobil də görünür
+ * - mobil shadow NONE deyil (az shadow var)
+ * - hover zamanı yumşaq glow shadow
  */
 const Card = ({
   children,
@@ -130,20 +112,19 @@ const Card = ({
   reduceMotion?: boolean;
   dark?: boolean;
 }) => {
+  // Desktop: glass + blur
+  // Mobile: blur OFF (Safari scroll artifact fix) + solid background
   const base =
     "rounded-2xl " +
-    // Desktop bg
-    (dark ? "bg-white/5 " : "bg-white/85 ") +
-    // Blur only on md+ (mobile iOS fix)
-    "backdrop-blur-0 md:backdrop-blur-md " +
-    // Mobile bg (solid)
-    (dark
-      ? "max-md:bg-black/50 "
-      : "max-md:bg-white ") +
-    // Shadow (always some, to separate in light mode too)
-    (dark
-      ? "shadow-[0_12px_45px_rgba(0,0,0,0.30)] "
-      : "shadow-[0_14px_55px_rgba(0,0,0,0.14)] ") +
+    // ❌ border YOX
+    // Background: light modda card ağ olsun (body ilə birləşməsin)
+    (dark ? "bg-white/5 " : "bg-white ") +
+    // ✅ iOS/Safari scroll-da "blur overlay" problemi: mobilde backdrop-filter NONE
+    "backdrop-blur-none md:backdrop-blur-md " +
+    // Mobile fix (dark-da da görünəcək qədər açıq)
+    (dark ? "max-md:bg-white/5 " : "max-md:bg-white ") +
+    // Shadow: soft (mobil-də də qalır)
+    "shadow-[0_12px_40px_rgba(0,0,0,.18)] " +
     "transition-shadow duration-300 " +
     className;
 
@@ -158,21 +139,22 @@ const Card = ({
             ? {
               y: -2,
               boxShadow: dark
-                ? "0 18px 60px rgba(255,255,255,0.08)"
-                : "0 18px 60px rgba(0,0,0,0.16)",
+                ? "0 18px 55px rgba(255,255,255,0.08)"
+                : "0 18px 55px rgba(0,0,0,0.14)",
             }
             : {
               boxShadow: dark
-                ? "0 18px 60px rgba(255,255,255,0.08)"
-                : "0 18px 60px rgba(0,0,0,0.16)",
+                ? "0 18px 55px rgba(255,255,255,0.08)"
+                : "0 18px 55px rgba(0,0,0,0.14)",
             }
       }
-      transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
     </motion.div>
   );
 };
+
 
 const Button = ({
   children,
@@ -257,7 +239,7 @@ function useActiveSection(ids: string[]) {
 
 /** ---------- Motion helpers ---------- */
 const makeReveal = (reduce: boolean): Variants => ({
-  hidden: { opacity: 0, y: reduce ? 0 : 18 },
+  hidden: { opacity: 0, y: reduce ? 0 : 22 },
   show: {
     opacity: 1,
     y: 0,
@@ -272,11 +254,11 @@ const makeStagger = (reduce: boolean, stagger = 0.085): Variants => ({
   show: {
     transition: reduce
       ? { duration: 0.01 }
-      : { staggerChildren: stagger, delayChildren: 0.1 },
+      : { staggerChildren: stagger, delayChildren: 0.10 },
   },
 });
 
-// Yumşaq flip (yalnız md+ istifadə edəcəyik)
+/** ✅ Yumşaq flip (sert deyil) */
 const makeFlipY = (reduce: boolean, delay = 0): Variants => ({
   hidden: reduce ? { opacity: 1, y: 0, rotateY: 0 } : { opacity: 0, y: 14, rotateY: 50 },
   show: reduce
@@ -333,7 +315,7 @@ const makeSlideTilt = (
   };
 };
 
-/** ---------- Animated number (smooth) ---------- */
+/** ---------- Animated number (0 -> target on view) ---------- */
 function AnimatedNumber({
   value,
   suffix = "",
@@ -348,10 +330,10 @@ function AnimatedNumber({
   duration?: number;
 }) {
   const ref = useRef<HTMLSpanElement | null>(null);
-  const inView = useInView(ref, { once: true, amount: 0.55 });
+  const inView = useInView(ref, { once: true, amount: 0.5 });
 
   const mv = useMotionValue(0);
-  const spring = useSpring(mv, { stiffness: 70, damping: 22, mass: 0.9 });
+  const spring = useSpring(mv, { stiffness: 70, damping: 22, mass: 0.9 }); // ✅ yumşaq
   const rounded = useTransform(spring, (v) => Math.round(v));
 
   React.useEffect(() => {
@@ -360,6 +342,7 @@ function AnimatedNumber({
       mv.set(value);
       return;
     }
+    // ✅ smooth count-up
     const controls = animate(mv, value, { duration, ease: [0.22, 1, 0.36, 1] });
     return () => controls.stop();
   }, [inView, value, mv, reduceMotion, duration]);
@@ -372,7 +355,7 @@ function AnimatedNumber({
   );
 }
 
-/** ---------- Skill Row ---------- */
+/** ---------- Skill Row (bar + % text 0-dan animasiya) ---------- */
 function SkillRow({
   name,
   level,
@@ -397,6 +380,7 @@ function SkillRow({
     <div ref={ref}>
       <div className="flex items-center justify-between text-sm">
         <span className={dark ? "text-white" : "text-black"}>{name}</span>
+
         <span className={muted}>
           {inView ? (
             <AnimatedNumber value={level} suffix="%" reduceMotion={reduceMotion} duration={1.1} />
@@ -415,7 +399,7 @@ function SkillRow({
           transition={
             reduceMotion
               ? { duration: 0.01 }
-              : { duration: 1.25, ease: [0.22, 1, 0.36, 1] }
+              : { duration: 1.25, ease: [0.22, 1, 0.36, 1] } // ✅ yumşaq
           }
         />
       </div>
@@ -425,7 +409,6 @@ function SkillRow({
 
 export default function Portfolio() {
   const reduceMotion = useReducedMotion();
-  const mdUp = useMdUp();
 
   const [dark, setDark] = useState(true);
   const [lang, setLang] = useState<Lang>("en");
@@ -433,7 +416,7 @@ export default function Portfolio() {
   const [cvOpen, setCvOpen] = useState(false);
   const cvRef = useRef<HTMLDivElement | null>(null);
 
-  // Contact form (UI only, API route səndə var)
+  // ✅ Contact form state
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [errors, setErrors] = useState<{
     name?: string;
@@ -452,11 +435,11 @@ export default function Portfolio() {
     if (!form.email.trim()) e.email = lang === "en" ? "Email is required." : "Email vacibdir.";
     else if (!validateEmail(form.email.trim()))
       e.email = lang === "en" ? "Enter a valid email." : "Düzgün email daxil et.";
-    if (!form.message.trim())
-      e.message = lang === "en" ? "Message is required." : "Mesaj vacibdir.";
+    if (!form.message.trim()) e.message = lang === "en" ? "Message is required." : "Mesaj vacibdir.";
     return e;
   };
 
+  /** ✅ Refresh olanda həmişə Home-dan başlasın */
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
@@ -477,8 +460,7 @@ export default function Portfolio() {
       nav: { home: "Home", about: "About", skills: "Skills", projects: "Projects", contact: "Contact" },
       hero: {
         title: "Junior Android Developer",
-        headline:
-          "I build user-friendly, performant, and reliable Android apps using modern Android technologies.",
+        headline: "I build user-friendly, performant, and reliable Android apps using modern Android technologies.",
         viewWork: "View My Work",
         projects: "Projects",
         contact: "Contact",
@@ -489,8 +471,7 @@ export default function Portfolio() {
         title: "About Me",
         subtitle: "I focus on clean code, solid architecture, and a great UX.",
         journeyTitle: "My Journey",
-        journeyText:
-          "I strengthen my skills by building real projects and continuously learning new technologies in Android development.",
+        journeyText: "I strengthen my skills by building real projects and continuously learning new technologies in Android development.",
         cards: {
           clean: "Readable, maintainable code structure.",
           ui: "Clean layouts and smooth UI animations with a modern approach.",
@@ -526,19 +507,17 @@ export default function Portfolio() {
           email: "Your Email",
           message: "Your Message",
           send: "Send Message",
-          note: "* This form sends email via your API route.",
+          note: "* This form is a demo. Later we can add real sending via EmailJS or a backend.",
         },
       },
-      footer: (name: string) =>
-        `© ${new Date().getFullYear()} ${name}. Built with Next.js, Tailwind CSS & Framer Motion.`,
+      footer: (name: string) => `© ${new Date().getFullYear()} ${name}. Built with Next.js, Tailwind CSS & Framer Motion.`,
     };
 
     const az = {
       nav: { home: "Home", about: "Haqqımda", skills: "Bacarıqlar", projects: "Layihələr", contact: "Əlaqə" },
       hero: {
         title: "Junior Android Developer",
-        headline:
-          "Müasir Android texnologiyalarından istifadə edərək istifadəçi dostu, performanslı və etibarlı mobil tətbiqlər hazırlayıram.",
+        headline: "Müasir Android texnologiyalarından istifadə edərək istifadəçi dostu, performanslı və etibarlı mobil tətbiqlər hazırlayıram.",
         viewWork: "İşlərimə bax",
         projects: "Layihələr",
         contact: "Əlaqə",
@@ -549,8 +528,7 @@ export default function Portfolio() {
         title: "Haqqımda",
         subtitle: "Səliqəli kod, stabil arxitektura və yaxşı UX üzərində fokuslanıram.",
         journeyTitle: "Yolum",
-        journeyText:
-          "Android sahəsində real layihələr üzərində işləyərək biliklərimi praktikada möhkəmləndirirəm və daim yeni texnologiyalar öyrənirəm.",
+        journeyText: "Android sahəsində real layihələr üzərində işləyərək biliklərimi praktikada möhkəmləndirirəm və daim yeni texnologiyalar öyrənməyə davam edirəm.",
         cards: {
           clean: "Oxunaqlı və maintainable kod strukturu.",
           ui: "Material yanaşma, səliqəli layout və animasiyalar.",
@@ -581,16 +559,9 @@ export default function Portfolio() {
         getInTouch: "Əlaqə",
         sendMsg: "Mesaj göndər",
         phoneLabel: "Telefon",
-        form: {
-          name: "Adınız",
-          email: "Email",
-          message: "Mesajınız",
-          send: "Göndər",
-          note: "* Bu form sənin API route ilə email göndərir.",
-        },
+        form: { name: "Adınız", email: "Email", message: "Mesajınız", send: "Göndər", note: "* Bu form demo kimidir. Sonradan real göndərmə əlavə edərik." },
       },
-      footer: (name: string) =>
-        `© ${new Date().getFullYear()} ${name}. Next.js, Tailwind CSS & Framer Motion ilə hazırlanıb.`,
+      footer: (name: string) => `© ${new Date().getFullYear()} ${name}. Next.js, Tailwind CSS & Framer Motion ilə hazırlanıb.`,
     };
 
     return lang === "en" ? en : az;
@@ -603,8 +574,8 @@ export default function Portfolio() {
       headline: t.hero.headline,
       about:
         lang === "en"
-          ? "I’m a junior Android developer who’s curious, eager to learn, and effective in teamwork. I keep improving by applying my skills in real projects. My goal is to build reliable, high-quality apps that are comfortable to use and create value."
-          : "Yeni texnologiyalara açıq, öyrənməyə maraqlı və komandada effektiv işləyən Junior Android Developerəm. Bilik və bacarıqlarımı real layihələrdə tətbiq edərək daim inkişaf etməyə çalışıram. Məqsədim istifadəsi rahat, etibarlı və keyfiyyətli mobil tətbiqlər hazırlayaraq dəyər yaratmaqdır.",
+          ? "I’m a junior Android developer who’s curious, eager to learn, and effective in teamwork. I keep improving by applying my skills in real projects."
+          : "Yeni texnologiyalara açıq, öyrənməyə maraqlı və komandada effektiv işləyən Junior Android Developerəm. Bilik və bacarıqlarımı real layihələrdə tətbiq edərək daim inkişaf etməyə çalışıram.",
       focus:
         lang === "en"
           ? ["MVVM & Clean Architecture", "Async programming (Coroutines, Flow)", "REST API integration", "Working with new technologies"]
@@ -666,8 +637,8 @@ export default function Portfolio() {
         status: "Live",
         description:
           lang === "en"
-            ? "ATL Academy final project — an Android app for movie enthusiasts. Browse trending/top-rated titles, explore details, and deliver a smooth, responsive experience with MVVM and Retrofit-based API integration."
-            : "ATL Academy final layihəsi — film həvəskarları üçün Android tətbiqi. Trend/Top Rated siyahılarını izləmək, film detallarına baxmaq və rahat istifadə təcrübəsi üçün MVVM + Retrofit ilə API inteqrasiyası tətbiq olunub.",
+            ? "ATL Academy final project — an Android app for movie enthusiasts. Browse trending/top-rated titles, explore details, and deliver a smooth experience."
+            : "ATL Academy final layihəsi — film həvəskarları üçün Android tətbiqi. Trend/Top Rated siyahılarını izləmək və film detallarına baxmaq üçün hazırlanıb.",
         tech: ["Kotlin", "MVVM", "Retrofit", "Coroutines", "Flow"],
         link: "https://github.com/Baxtiyar09/moviesApp",
         features:
@@ -680,8 +651,8 @@ export default function Portfolio() {
         status: "In progress",
         description:
           lang === "en"
-            ? "A digital memory platform for preserving stories and memories of loved ones. Built with real backend integration, structured content management, onboarding flow, and stable UI states such as loading and empty screens."
-            : "Yaxınlarını itirmiş insanlar üçün xatirələrin rəqəmsal formada saxlanması üçün hazırlanmış platforma. Real backend inteqrasiyası, strukturlaşdırılmış kontent idarəetməsi, onboarding axını və loading/empty state kimi stabil UI həlləri mövcuddur.",
+            ? "A digital memory platform for preserving stories and memories of loved ones. Built with real backend integration and stable UI states."
+            : "Yaxınlarını itirmiş insanlar üçün xatirələrin rəqəmsal formada saxlanması üçün hazırlanmış platforma. Real backend inteqrasiyası və stabil UI state-lər mövcuddur.",
         tech: ["Kotlin", "MVVM", "Backend API", "Authentication"],
         features:
           lang === "en"
@@ -693,8 +664,8 @@ export default function Portfolio() {
         status: "Coming soon",
         description:
           lang === "en"
-            ? "An upcoming e-commerce style project planned for Google Play after the next phase. Focused on clean architecture, scalable structure, and performance-friendly UI with modern Android practices."
-            : "Növbəti mərhələdən sonra Google Play üçün planlaşdırılan e-commerce tipli layihə. Clean Architecture, genişlənə bilən struktur və performans yönümlü modern UI yanaşması üzərində qurulur.",
+            ? "An upcoming e-commerce style project planned for Google Play after the next phase."
+            : "Növbəti mərhələdən sonra Google Play üçün planlaşdırılan e-commerce tipli layihə.",
         tech: ["Clean Architecture", "Performance", "Modern UI"],
         features:
           lang === "en"
@@ -706,8 +677,8 @@ export default function Portfolio() {
         status: "Coming soon",
         description:
           lang === "en"
-            ? "A zodiac-focused app with daily/weekly insights and clean content presentation. Planned features include API-driven predictions, smooth navigation, and a modern UI built for readability."
-            : "Bürclər üçün gündəlik/həftəlik proqnozlar və səliqəli kontent təqdimatı edən tətbiq. API ilə proqnoz məlumatları, rahat naviqasiya və oxunaqlı modern UI üzərində planlaşdırılır.",
+            ? "A zodiac-focused app with daily/weekly insights and clean content presentation."
+            : "Bürclər üçün gündəlik/həftəlik proqnozlar və səliqəli kontent təqdimatı edən tətbiq.",
         tech: ["REST API", "Kotlin", "Modern UI"],
         features:
           lang === "en"
@@ -734,7 +705,6 @@ export default function Portfolio() {
   const bg = dark ? "bg-[#07080a] text-white" : "bg-white text-[#0b0d12]";
   const muted = dark ? "text-white/60" : "text-black/55";
   const navBg = dark ? "bg-black/50" : "bg-white/70";
-  const border = dark ? "border-white/10" : "border-black/10";
 
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
@@ -749,7 +719,7 @@ export default function Portfolio() {
 
   return (
     <div className={`min-h-screen ${bg}`}>
-      {/* Ambient (mobile-də OFF) */}
+      {/* Ambient */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden max-md:hidden">
         <div
           className={
@@ -766,7 +736,7 @@ export default function Portfolio() {
       </div>
 
       {/* Navbar */}
-      <div className={`fixed top-0 left-0 right-0 z-50 ${navBg} border-b ${border} backdrop-blur-md max-md:backdrop-blur-0`}>
+      <div className={`fixed top-0 left-0 right-0 z-50 ${navBg} border-b ${dark ? "border-white/10" : "border-black/10"} backdrop-blur-md max-md:backdrop-blur-0`}>
         <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between">
           <button onClick={() => scrollTo("home")} className="text-sm font-semibold tracking-wide">
             AndroidDev
@@ -806,7 +776,6 @@ export default function Portfolio() {
                 (dark ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-black/10 bg-black/5 hover:bg-black/10")
               }
               aria-label="Toggle language"
-              title={lang === "en" ? "Switch to Azerbaijani" : "İngiliscəyə keç"}
             >
               <Languages size={16} />
             </button>
@@ -843,28 +812,27 @@ export default function Portfolio() {
             </motion.p>
 
             <motion.div variants={reveal} className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              {/* Desktop / Tablet CTAs */}
               <div className="hidden sm:flex flex-wrap items-center justify-center gap-3">
-                <Button
-                  variant="primary"
-                  tone={dark ? "dark" : "light"}
-                  onClick={() => scrollTo("projects")}
-                  className="min-w-[160px]"
-                  hoverLift
-                  reduceMotion={!!reduceMotion}
-                >
-                  {t.hero.viewWork}
-                  <motion.span
-                    aria-hidden
-                    animate={reduceMotion ? undefined : { y: [0, 4, 0] }}
-                    transition={
-                      reduceMotion ? undefined : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }
-                    }
-                    className="inline-flex"
+                <div className="relative group">
+                  <Button
+                    variant="primary"
+                    tone={dark ? "dark" : "light"}
+                    onClick={() => scrollTo("projects")}
+                    className="min-w-[160px]"
+                    hoverLift
+                    reduceMotion={!!reduceMotion}
                   >
-                    <ChevronDown size={16} />
-                  </motion.span>
-                </Button>
+                    {t.hero.viewWork}
+                    <motion.span
+                      aria-hidden
+                      animate={reduceMotion ? undefined : { y: [0, 4, 0] }}
+                      transition={reduceMotion ? undefined : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
+                      className="inline-flex"
+                    >
+                      <ChevronDown size={16} />
+                    </motion.span>
+                  </Button>
+                </div>
 
                 <Button href={profile.contact.github} variant="outline" tone={dark ? "dark" : "light"} hoverLift reduceMotion={!!reduceMotion}>
                   <Github size={16} /> GitHub
@@ -879,57 +847,55 @@ export default function Portfolio() {
                 </Button>
               </div>
 
-              {/* Mobile CTAs */}
               <div className="flex sm:hidden w-full max-w-sm mx-auto gap-3">
-                <Button
-                  variant="primary"
-                  tone={dark ? "dark" : "light"}
-                  onClick={() => scrollTo("projects")}
-                  className="flex-1"
-                  hoverLift
-                  reduceMotion={!!reduceMotion}
-                >
+                <Button variant="primary" tone={dark ? "dark" : "light"} onClick={() => scrollTo("projects")} className="flex-1" hoverLift reduceMotion={!!reduceMotion}>
                   {t.hero.projects}
                   <motion.span
                     aria-hidden
                     animate={reduceMotion ? undefined : { y: [0, 4, 0] }}
-                    transition={
-                      reduceMotion ? undefined : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }
-                    }
+                    transition={reduceMotion ? undefined : { duration: 1.1, repeat: Infinity, ease: [0.4, 0, 0.2, 1] }}
                     className="inline-flex"
                   >
                     <ChevronDown size={16} />
                   </motion.span>
                 </Button>
 
-                <Button
-                  href={`mailto:${profile.contact.email}`}
-                  variant="outline"
-                  tone={dark ? "dark" : "light"}
-                  className="flex-1"
-                  hoverLift
-                  reduceMotion={!!reduceMotion}
-                >
+                <Button href={`mailto:${profile.contact.email}`} variant="outline" tone={dark ? "dark" : "light"} className="flex-1" hoverLift reduceMotion={!!reduceMotion}>
                   <Mail size={16} /> {t.hero.contact}
                 </Button>
               </div>
             </motion.div>
 
-            {/* ✅ Download CV dropdown (geri qaytarildi) */}
+            {/* Download CV (dropdown) */}
             <motion.div variants={reveal} className="relative mt-4 flex justify-center" ref={cvRef}>
               <Button
                 variant="outline"
                 tone={dark ? "dark" : "light"}
                 onClick={() => setCvOpen((v) => !v)}
-                className="min-w-[170px]"
+                className="min-w-[160px]"
                 hoverLift
                 reduceMotion={!!reduceMotion}
               >
-                <Download size={16} /> {t.hero.downloadCV}
+                {t.hero.downloadCV}
                 <motion.span
                   aria-hidden
-                  animate={reduceMotion ? undefined : { rotate: cvOpen ? 180 : 0 }}
-                  transition={reduceMotion ? undefined : { duration: 0.18 }}
+                  animate={
+                    reduceMotion
+                      ? undefined
+                      : { rotate: cvOpen ? 180 : 0, y: cvOpen ? 0 : [0, 4, 0] }
+                  }
+                  transition={
+                    reduceMotion
+                      ? undefined
+                      : {
+                        rotate: { duration: 0.18 },
+                        y: {
+                          duration: 1.2,
+                          repeat: cvOpen ? 0 : Infinity,
+                          ease: [0.4, 0, 0.2, 1],
+                        },
+                      }
+                  }
                   className="inline-flex"
                 >
                   <ChevronDown size={16} />
@@ -940,14 +906,14 @@ export default function Portfolio() {
                 initial={false}
                 animate={cvOpen ? "open" : "closed"}
                 variants={{
-                  open: { opacity: 1, y: 8, pointerEvents: "auto" as const },
-                  closed: { opacity: 0, y: 0, pointerEvents: "none" as const },
+                  open: { opacity: 1, y: 8, pointerEvents: "auto" },
+                  closed: { opacity: 0, y: 0, pointerEvents: "none" },
                 }}
                 transition={{ duration: 0.18, ease: [0.2, 0.9, 0.2, 1] }}
                 className={
                   "absolute left-1/2 -translate-x-1/2 mt-2 w-52 rounded-2xl overflow-hidden " +
-                  "shadow-[0_18px_60px_rgba(0,0,0,.45)] " +
-                  (dark ? "bg-black/70" : "bg-white/95")
+                  "shadow-[0_18px_60px_rgba(0,0,0,.25)] " +
+                  (dark ? "bg-black/70" : "bg-white")
                 }
               >
                 <a
@@ -999,24 +965,12 @@ export default function Portfolio() {
               ))}
             </motion.div>
 
-            <div className="grid lg:grid-cols-3 gap-6" style={mdUp ? { perspective: 1200 } : undefined}>
-              <motion.div
-                variants={mdUp ? makeFlipX(!!reduceMotion, 0) : reveal}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.25 }}
-                className="lg:col-span-2"
-              >
+            <div className="grid lg:grid-cols-3 gap-6" style={{ perspective: 1200 }}>
+              <motion.div variants={makeFlipX(!!reduceMotion, 0)} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.25 }} className="lg:col-span-2">
                 <Card dark={dark} className="p-6" reduceMotion={!!reduceMotion} hoverLift>
                   <p className={"text-sm leading-relaxed " + muted}>{profile.about}</p>
 
-                  <motion.div
-                    variants={makeStagger(!!reduceMotion, 0.09)}
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true, amount: 0.35 }}
-                    className="mt-6 grid sm:grid-cols-2 gap-4"
-                  >
+                  <motion.div variants={makeStagger(!!reduceMotion, 0.09)} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.35 }} className="mt-6 grid sm:grid-cols-2 gap-4">
                     {[
                       { title: "Clean Code", text: t.about.cards.clean },
                       { title: "Modern UI/UX", text: t.about.cards.ui },
@@ -1048,12 +1002,7 @@ export default function Portfolio() {
                 </Card>
               </motion.div>
 
-              <motion.div
-                variants={mdUp ? makeFlipY(!!reduceMotion, 0.12) : reveal}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.25 }}
-              >
+              <motion.div variants={makeFlipY(!!reduceMotion, 0.12)} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.25 }}>
                 <Card dark={dark} className="p-6" reduceMotion={!!reduceMotion} hoverLift>
                   <div className="text-sm font-medium">{t.about.journeyTitle}</div>
                   <p className={"mt-2 text-sm leading-relaxed " + muted}>{t.about.journeyText}</p>
@@ -1082,13 +1031,7 @@ export default function Portfolio() {
             </motion.div>
 
             <div className="grid lg:grid-cols-3 gap-6">
-              <motion.div
-                variants={makeSlideTilt(!!reduceMotion, "left", 0)}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.25 }}
-                className="lg:col-span-2"
-              >
+              <motion.div variants={makeSlideTilt(!!reduceMotion, "left", 0)} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.25 }} className="lg:col-span-2">
                 <Card dark={dark} className="p-6" reduceMotion={!!reduceMotion} hoverLift>
                   <div className="text-sm font-medium mb-4">{t.skills.core}</div>
                   <div className="grid gap-4">
@@ -1099,12 +1042,7 @@ export default function Portfolio() {
                 </Card>
               </motion.div>
 
-              <motion.div
-                variants={makeSlideTilt(!!reduceMotion, "right", 0.12)}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.25 }}
-              >
+              <motion.div variants={makeSlideTilt(!!reduceMotion, "right", 0.12)} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.25 }}>
                 <Card dark={dark} className="p-6" reduceMotion={!!reduceMotion} hoverLift>
                   <div className="text-sm font-medium mb-4">{t.skills.stack}</div>
 
@@ -1130,21 +1068,33 @@ export default function Portfolio() {
               </motion.div>
             </div>
 
-            {/* ✅ Stats: eyni qalır, hover yalnız 3 item-ə yumşaq scale */}
+            {/* ✅ Stats card: dizayn əvvəlki kimi, hover yalnız text/item-ə */}
             <motion.div variants={reveal} className="mt-6">
-              <Card dark={dark} className="p-6" reduceMotion={!!reduceMotion}>
-                <div className={"rounded-2xl p-5 text-center " + (dark ? "bg-black/30" : "bg-white")}>
+              <Card dark={dark} className="p-6" reduceMotion={!!reduceMotion} hoverLift>
+                <div
+                  className={
+                    "rounded-2xl p-5 text-center " +
+                    (dark ? "bg-black/30" : "bg-white")
+                  }
+                >
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { type: "junior" as const, label: t.skills.stat1 },
                       { type: "projects" as const, label: t.skills.stat2 },
                       { type: "learning" as const, label: t.skills.stat3 },
-                    ].map((s) => (
+                    ].map((s, idx) => (
                       <motion.div
                         key={s.type}
                         className="cursor-default"
-                        whileHover={reduceMotion ? undefined : { scale: 1.06 }}
-                        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                        whileHover={
+                          reduceMotion
+                            ? undefined
+                            : {
+                              scale: 1.06,
+                              filter: "drop-shadow(0 14px 28px rgba(59,130,246,0.22))"
+                            }
+                        }
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                       >
                         <div className="text-2xl font-semibold">
                           {s.type === "junior" ? (
@@ -1172,30 +1122,26 @@ export default function Portfolio() {
               <SectionTitle title={t.projects.title} subtitle={t.projects.subtitle} subtitleClass={muted} />
             </motion.div>
 
-            {/* ✅ iOS fix: perspective/3D yalnız md+ */}
-            <div
-              className="grid md:grid-cols-2 gap-6"
-              style={mdUp ? { perspective: 1400 } : undefined}
-            >
+            <div className="grid md:grid-cols-2 gap-6" style={{ perspective: 1400 }}>
               {projects.map((p, idx) => (
                 <motion.div
                   key={p.title}
-                  variants={mdUp ? makeFlipY(!!reduceMotion, idx * 0.12) : reveal}
+                  variants={makeFlipY(!!reduceMotion, idx * 0.12)}
                   initial="hidden"
                   whileInView="show"
                   viewport={{ once: true, amount: 0.25 }}
-                  style={mdUp ? { transformStyle: "preserve-3d" } : undefined}
-                  whileHover={mdUp && !reduceMotion ? { y: -3 } : undefined}
+                  style={{ transformStyle: "preserve-3d" }}
+                  whileHover={reduceMotion ? undefined : { y: -3 }}
                   transition={
                     reduceMotion
                       ? { duration: 0.01 }
-                      : { duration: 0.95, ease: [0.16, 1, 0.3, 1] }
+                      : { duration: 1.05, ease: [0.16, 1, 0.3, 1] }
                   }
                 >
                   <Card
-                    dark={dark}
                     enableLayout={enableLayout}
                     reduceMotion={!!reduceMotion}
+                    dark={dark}
                     className="p-6 h-full"
                     hoverLift
                   >
@@ -1279,12 +1225,23 @@ export default function Portfolio() {
 
         {/* CONTACT */}
         <section id="contact" className="py-20">
-          <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.22 }}>
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.22 }}
+          >
             <motion.div variants={reveal}>
-              <SectionTitle title={t.contact.title} subtitle={t.contact.subtitle} subtitleClass={muted} />
+              <SectionTitle
+                title={t.contact.title}
+                subtitle={t.contact.subtitle}
+                subtitleClass={muted}
+              />
             </motion.div>
 
-            <div className="grid lg:grid-cols-2 gap-6" style={mdUp ? { perspective: 1200 } : undefined}>
+            {/* ✅ Contact 2 kart: fərqli animasiyalar */}
+            <div className="grid lg:grid-cols-2 gap-6" style={{ perspective: 1200 }}>
+              {/* left - slide tilt */}
               <motion.div
                 variants={makeSlideTilt(!!reduceMotion, "left", 0)}
                 initial="hidden"
@@ -1336,7 +1293,12 @@ export default function Portfolio() {
                           transition={
                             reduceMotion
                               ? { duration: 0.01 }
-                              : { duration: 0.9, repeat: Infinity, ease: "easeInOut", delay: index * 0.12 }
+                              : {
+                                duration: 0.9,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                                delay: index * 0.12,
+                              }
                           }
                         >
                           <ArrowRight size={16} />
@@ -1351,8 +1313,9 @@ export default function Portfolio() {
                 </Card>
               </motion.div>
 
+              {/* right - flipX */}
               <motion.div
-                variants={mdUp ? makeFlipX(!!reduceMotion, 0.12) : reveal}
+                variants={makeFlipX(!!reduceMotion, 0.12)}
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true, amount: 0.25 }}
@@ -1392,7 +1355,9 @@ export default function Portfolio() {
                           setErrors({
                             server:
                               (data?.error as string) ||
-                              (lang === "en" ? "Failed to send. Try again." : "Göndərilmədi. Yenidən yoxla."),
+                              (lang === "en"
+                                ? "Failed to send. Try again."
+                                : "Göndərilmədi. Yenidən yoxla."),
                           });
                           return;
                         }
@@ -1401,7 +1366,10 @@ export default function Portfolio() {
                         setForm({ name: "", email: "", message: "" });
                       } catch {
                         setErrors({
-                          server: lang === "en" ? "Network error. Try again." : "Şəbəkə xətası. Yenidən yoxla.",
+                          server:
+                            lang === "en"
+                              ? "Network error. Try again."
+                              : "Şəbəkə xətası. Yenidən yoxla.",
                         });
                       } finally {
                         setSending(false);
@@ -1426,7 +1394,9 @@ export default function Portfolio() {
                         }
                         placeholder={t.contact.form.name}
                       />
-                      {errors.name ? <div className="mt-1 text-[11px] text-red-400">{errors.name}</div> : null}
+                      {errors.name ? (
+                        <div className="mt-1 text-[11px] text-red-400">{errors.name}</div>
+                      ) : null}
                     </div>
 
                     <div>
@@ -1448,7 +1418,9 @@ export default function Portfolio() {
                         }
                         placeholder={t.contact.form.email}
                       />
-                      {errors.email ? <div className="mt-1 text-[11px] text-red-400">{errors.email}</div> : null}
+                      {errors.email ? (
+                        <div className="mt-1 text-[11px] text-red-400">{errors.email}</div>
+                      ) : null}
                     </div>
 
                     <div>
@@ -1470,14 +1442,18 @@ export default function Portfolio() {
                         }
                         placeholder={t.contact.form.message}
                       />
-                      {errors.message ? <div className="mt-1 text-[11px] text-red-400">{errors.message}</div> : null}
+                      {errors.message ? (
+                        <div className="mt-1 text-[11px] text-red-400">{errors.message}</div>
+                      ) : null}
                     </div>
 
                     {errors.server ? (
                       <div
                         className={
                           "rounded-xl border px-4 py-3 text-sm " +
-                          (dark ? "border-red-500/20 bg-red-500/10 text-red-200" : "border-red-500/30 bg-red-50 text-red-700")
+                          (dark
+                            ? "border-red-500/20 bg-red-500/10 text-red-200"
+                            : "border-red-500/30 bg-red-50 text-red-700")
                         }
                       >
                         {errors.server}
@@ -1508,13 +1484,19 @@ export default function Portfolio() {
                       <motion.span
                         className="ml-2 inline-flex"
                         animate={reduceMotion ? { x: 0 } : { x: [0, 6, 0] }}
-                        transition={reduceMotion ? { duration: 0.01 } : { duration: 0.9, repeat: Infinity, ease: "easeInOut", delay: 0.36 }}
+                        transition={
+                          reduceMotion
+                            ? { duration: 0.01 }
+                            : { duration: 0.9, repeat: Infinity, ease: "easeInOut", delay: 0.36 }
+                        }
                       >
                         <ArrowRight size={16} />
                       </motion.span>
                     </Button>
 
-                    <p className={"text-[11px] leading-relaxed " + muted}>{t.contact.form.note}</p>
+                    <p className={"text-[11px] leading-relaxed " + muted}>
+                      {t.contact.form.note}
+                    </p>
                   </form>
                 </Card>
               </motion.div>
@@ -1522,8 +1504,12 @@ export default function Portfolio() {
           </motion.div>
         </section>
 
-        <footer className={"pt-10 text-center text-xs " + muted}>{t.footer(profile.name)}</footer>
+        {/* Footer */}
+        <footer className={"pt-10 text-center text-xs " + muted}>
+          {t.footer(profile.name)}
+        </footer>
       </div>
     </div>
   );
 }
+// --- End of recent edits
