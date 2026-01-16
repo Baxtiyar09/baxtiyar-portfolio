@@ -1000,7 +1000,7 @@ export default function Portfolio() {
                             ? undefined
                             : {
                               scale: 1.06,
-                              filter: "drop-shadow(0 14px 28px rgba(255,255,255,0.10))",
+                              filter: "drop-shadow(0 14px 28px rgba(59,130,246,0.22))"
                             }
                         }
                         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
