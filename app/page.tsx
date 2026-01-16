@@ -720,7 +720,7 @@ export default function Portfolio() {
   return (
     <div className={`min-h-screen ${bg}`}>
       {/* Ambient */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden max-md:opacity-20">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden max-md:hidden">
         <div
           className={
             "absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full blur-3xl opacity-30 " +
@@ -888,13 +888,13 @@ export default function Portfolio() {
                     reduceMotion
                       ? undefined
                       : {
-                        rotate: { duration: 0.18 },
-                        y: {
-                          duration: 1.2,
-                          repeat: cvOpen ? 0 : Infinity,
-                          ease: [0.4, 0, 0.2, 1],
-                        },
-                      }
+                          rotate: { duration: 0.18 },
+                          y: {
+                            duration: 1.2,
+                            repeat: cvOpen ? 0 : Infinity,
+                            ease: [0.4, 0, 0.2, 1],
+                          },
+                        }
                   }
                   className="inline-flex"
                 >
