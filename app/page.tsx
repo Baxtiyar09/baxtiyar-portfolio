@@ -120,7 +120,7 @@ const Card = ({
     // Background: light modda card ağ olsun (body ilə birləşməsin)
     (dark ? "bg-white/5 " : "bg-white ") +
     // ✅ iOS/Safari scroll-da "blur overlay" problemi: mobilde backdrop-filter NONE
-    "backdrop-blur-none md:backdrop-blur-md " +
+    "backdrop-blur-none max-md:backdrop-blur-0 " +
     // Mobile fix (dark-da da görünəcək qədər açıq)
     (dark ? "max-md:bg-white/5 " : "max-md:bg-white ") +
     // Shadow: soft (mobil-də də qalır)
