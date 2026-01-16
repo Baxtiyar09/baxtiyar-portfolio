@@ -6,6 +6,9 @@ import {
   useReducedMotion,
   useInView,
   type Variants,
+  useMotionValue,
+  useSpring,
+  useTransform,
 } from "framer-motion";
 import {
   Github,
@@ -88,29 +91,52 @@ const Pill = ({
   );
 };
 
+/**
+ * ✅ Card upgrade:
+ * - default shadow qalır
+ * - hover zamanı "blue/white glow shadow" əlavə olunur
+ * - yüngül lift də qalır
+ */
 const Card = ({
   children,
   className = "",
   enableLayout = false,
   hoverLift = false,
   reduceMotion = false,
+  glow = true,
 }: {
   children: React.ReactNode;
   className?: string;
   enableLayout?: boolean;
   hoverLift?: boolean;
   reduceMotion?: boolean;
+  glow?: boolean;
 }) => {
   const base =
-    "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_10px_40px_rgba(0,0,0,.35)] " +
+    "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md " +
+    "shadow-[0_10px_40px_rgba(0,0,0,.35)] " +
     "max-md:backdrop-blur-0 max-md:shadow-none " +
     className;
+
+  const hoverGlow = glow
+    ? {
+      boxShadow:
+        "0 22px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(59,130,246,.22), 0 0 40px rgba(59,130,246,.18)",
+    }
+    : undefined;
 
   return (
     <motion.div
       layout={enableLayout ? true : undefined}
       className={base}
-      whileHover={hoverLift && !reduceMotion ? { y: -4 } : undefined}
+      whileHover={
+        !reduceMotion
+          ? {
+            ...(hoverLift ? { y: -4 } : {}),
+            ...(hoverGlow ?? {}),
+          }
+          : undefined
+      }
       transition={{ duration: 0.18 }}
     >
       {children}
@@ -201,7 +227,7 @@ function useActiveSection(ids: string[]) {
   return active;
 }
 
-/** ---------- Motion helpers (performans-friendly) ---------- */
+/** ---------- Motion helpers ---------- */
 const makeReveal = (reduce: boolean): Variants => ({
   hidden: { opacity: 0, y: reduce ? 0 : 22 },
   show: {
@@ -222,7 +248,103 @@ const makeStagger = (reduce: boolean, stagger = 0.085): Variants => ({
   },
 });
 
-/** ---------- Skill Row (bar soldan-sağa dolur) ---------- */
+/** ✅ 3D Flip variants (Projects üçün ardıcıl) */
+const makeFlipY = (reduce: boolean, delay = 0): Variants => ({
+  hidden: reduce
+    ? { opacity: 1, y: 0, rotateY: 0 }
+    : { opacity: 0, y: 18, rotateY: 90 },
+  show: reduce
+    ? { opacity: 1, y: 0, rotateY: 0, transition: { duration: 0.01 } }
+    : {
+      opacity: 1,
+      y: 0,
+      rotateY: 0,
+      transition: {
+        duration: 0.72,
+        ease: [0.16, 1, 0.3, 1],
+        delay,
+      },
+    },
+});
+
+/** ✅ About/Skills/Contact üçün fərqli variantlar */
+const makeFlipX = (reduce: boolean, delay = 0): Variants => ({
+  hidden: reduce
+    ? { opacity: 1, y: 0, rotateX: 0 }
+    : { opacity: 0, y: 18, rotateX: 75 },
+  show: reduce
+    ? { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.01 } }
+    : {
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      transition: {
+        duration: 0.72,
+        ease: [0.16, 1, 0.3, 1],
+        delay,
+      },
+    },
+});
+
+const makeSlideTilt = (
+  reduce: boolean,
+  from: "left" | "right",
+  delay = 0
+): Variants => {
+  const x = from === "left" ? -28 : 28;
+  const r = from === "left" ? -6 : 6;
+  return {
+    hidden: reduce ? { opacity: 1, x: 0, rotate: 0 } : { opacity: 0, x, rotate: r },
+    show: reduce
+      ? { opacity: 1, x: 0, rotate: 0, transition: { duration: 0.01 } }
+      : {
+        opacity: 1,
+        x: 0,
+        rotate: 0,
+        transition: {
+          duration: 0.7,
+          ease: [0.16, 1, 0.3, 1],
+          delay,
+        },
+      },
+  };
+};
+
+/** ---------- Animated number (0 -> target on view) ---------- */
+function AnimatedNumber({
+  value,
+  suffix = "",
+  className = "",
+  reduceMotion,
+}: {
+  value: number;
+  suffix?: string;
+  className?: string;
+  reduceMotion: boolean;
+}) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
+
+  const mv = useMotionValue(0);
+  const spring = useSpring(mv, { stiffness: 120, damping: 18 });
+  const rounded = useTransform(spring, (v) => Math.round(v));
+
+  React.useEffect(() => {
+    if (!inView) return;
+    mv.set(reduceMotion ? value : value);
+  }, [inView, value, mv, reduceMotion]);
+
+  return (
+    <span ref={ref} className={className}>
+      <motion.span>
+        {reduceMotion ? value : rounded}
+      </motion.span>
+      {suffix}
+    </span>
+  );
+}
+
+/** ---------- Skill Row (bar + % text 0-dan animasiya) ---------- */
 function SkillRow({
   name,
   level,
@@ -247,7 +369,19 @@ function SkillRow({
     <div ref={ref}>
       <div className="flex items-center justify-between text-sm">
         <span className={dark ? "text-white" : "text-black"}>{name}</span>
-        <span className={muted}>{level}%</span>
+
+        {/* ✅ 0 -> level */}
+        <span className={muted}>
+          {inView ? (
+            <AnimatedNumber
+              value={level}
+              suffix="%"
+              reduceMotion={reduceMotion}
+            />
+          ) : (
+            "0%"
+          )}
+        </span>
       </div>
 
       <div className={"mt-2 h-2 rounded-full overflow-hidden " + track}>
@@ -267,6 +401,60 @@ function SkillRow({
   );
 }
 
+/** ---------- Stats item (4+, 100% kimi) ---------- */
+function StatItem({
+  type,
+  label,
+  dark,
+  muted,
+  reduceMotion,
+}: {
+  type: "junior" | "projects" | "learning";
+  label: string;
+  dark: boolean;
+  muted: string;
+  reduceMotion: boolean;
+}) {
+  // target
+  const target = type === "projects" ? 4 : type === "learning" ? 100 : 0;
+  const suffix = type === "projects" ? "+" : type === "learning" ? "%" : "";
+
+  return (
+    <motion.div
+      whileHover={!reduceMotion ? { scale: 1.06 } : undefined}
+      transition={{ duration: 0.18 }}
+      className="cursor-default"
+    >
+      <div className="text-2xl font-semibold">
+        {type === "junior" ? (
+          <motion.span
+            initial={reduceMotion ? undefined : { opacity: 0, y: 6 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.6 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          >
+            Junior
+          </motion.span>
+        ) : (
+          <motion.span
+            initial={reduceMotion ? undefined : { opacity: 0 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1 }}
+            viewport={{ once: true, amount: 0.6 }}
+            transition={{ duration: 0.2 }}
+          >
+            <AnimatedNumber
+              value={target}
+              suffix={suffix}
+              reduceMotion={reduceMotion}
+            />
+          </motion.span>
+        )}
+      </div>
+      <div className={"text-xs mt-1 " + muted}>{label}</div>
+    </motion.div>
+  );
+}
+
 export default function Portfolio() {
   const reduceMotion = useReducedMotion();
 
@@ -278,7 +466,12 @@ export default function Portfolio() {
 
   // ✅ Contact form state
   const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string; server?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    message?: string;
+    server?: string;
+  }>({});
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -288,11 +481,12 @@ export default function Portfolio() {
     const e: typeof errors = {};
     if (!form.name.trim()) e.name = lang === "en" ? "Name is required." : "Ad vacibdir.";
     if (!form.email.trim()) e.email = lang === "en" ? "Email is required." : "Email vacibdir.";
-    else if (!validateEmail(form.email.trim())) e.email = lang === "en" ? "Enter a valid email." : "Düzgün email daxil et.";
-    if (!form.message.trim()) e.message = lang === "en" ? "Message is required." : "Mesaj vacibdir.";
+    else if (!validateEmail(form.email.trim()))
+      e.email = lang === "en" ? "Enter a valid email." : "Düzgün email daxil et.";
+    if (!form.message.trim())
+      e.message = lang === "en" ? "Message is required." : "Mesaj vacibdir.";
     return e;
   };
-
 
   /** ✅ Refresh olanda həmişə Home-dan başlasın */
   React.useEffect(() => {
@@ -343,7 +537,7 @@ export default function Portfolio() {
         subtitle: "Main technologies I use to build Android applications.",
         core: "Core Expertise",
         stack: "Technology Stack",
-        tools: "Tools I use", // ✅ ƏLAVƏ ETDİM
+        tools: "Tools I use",
         stat1: "Level",
         stat2: "Projects",
         stat3: "Learning",
@@ -366,8 +560,7 @@ export default function Portfolio() {
           email: "Your Email",
           message: "Your Message",
           send: "Send Message",
-          note:
-            "* This form is a demo. Later we can add real sending via EmailJS or a backend.",
+          note: "* This form is a demo. Later we can add real sending via EmailJS or a backend.",
           alert: "Message sent (demo). You can also contact me via email.",
         },
       },
@@ -405,7 +598,7 @@ export default function Portfolio() {
         subtitle: "Android tətbiqləri hazırlamaq üçün istifadə etdiyim əsas texnologiyalar.",
         core: "Əsas Bacarıqlar",
         stack: "Texnologiya Stack",
-        tools: "İstifadə etdiyim alətlər", // ✅ AZ tərcümə
+        tools: "İstifadə etdiyim alətlər",
         stat1: "Səviyyə",
         stat2: "Layihə",
         stat3: "Öyrənmə",
@@ -428,8 +621,7 @@ export default function Portfolio() {
           email: "Email",
           message: "Mesajınız",
           send: "Göndər",
-          note:
-            "* Bu form demo kimidir. Sonradan EmailJS və ya backend ilə real göndərmə əlavə edərik.",
+          note: "* Bu form demo kimidir. Sonradan EmailJS və ya backend ilə real göndərmə əlavə edərik.",
           alert: "Mesaj göndərildi (demo). Email ilə də yaza bilərsiniz.",
         },
       },
@@ -521,7 +713,6 @@ export default function Portfolio() {
     []
   );
 
-
   const projects = useMemo<Project[]>(
     () => [
       {
@@ -604,7 +795,7 @@ export default function Portfolio() {
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  // motion variants
+  // basic variants
   const reveal = makeReveal(!!reduceMotion);
   const stagger = makeStagger(!!reduceMotion, 0.085);
   const heroStagger = makeStagger(!!reduceMotion, 0.14);
@@ -629,7 +820,7 @@ export default function Portfolio() {
         />
       </div>
 
-      {/* Navbar (MOBIL-də blur söndürülüb) */}
+      {/* Navbar */}
       <div
         className={`fixed top-0 left-0 right-0 z-50 ${navBg} border-b ${border} backdrop-blur-md max-md:backdrop-blur-0`}
       >
@@ -940,551 +1131,627 @@ export default function Portfolio() {
         </section>
 
         {/* ABOUT */}
-        <motion.section
-          id="about"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.22 }}
-          className="py-20"
-        >
-          <motion.div variants={reveal}>
-            <SectionTitle title={t.about.title} subtitle={t.about.subtitle} subtitleClass={muted} />
-          </motion.div>
-
-          {/* ✅ About pills: hover invert */}
+        <section id="about" className="py-20">
           <motion.div
-            variants={reveal}
-            className="mt-6 mb-10 flex flex-wrap items-center justify-center gap-2"
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.22 }}
           >
-            {profile.focus.map((f) => (
-              <Pill
-                tone={dark ? "dark" : "light"}
-                hoverInvert
-                key={f}
-              >
-                {f}
-              </Pill>
-            ))}
-          </motion.div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            <motion.div variants={reveal} className="lg:col-span-2">
-              <Card reduceMotion={!!reduceMotion} hoverLift className="p-6">
-                <p className={"text-sm leading-relaxed " + muted}>{profile.about}</p>
-
-                <motion.div variants={stagger} className="mt-6 grid sm:grid-cols-2 gap-4">
-                  {[
-                    { title: "Clean Code", text: t.about.cards.clean },
-                    { title: "Modern UI/UX", text: t.about.cards.ui },
-                    { title: "User-Centered", text: t.about.cards.user },
-                    { title: "Performance", text: t.about.cards.perf },
-                  ].map((item) => (
-                    <motion.div
-                      key={item.title}
-                      variants={reveal}
-                      whileHover={!reduceMotion ? { y: -3 } : undefined}
-                      transition={{ duration: 0.18 }}
-                      className={
-                        "rounded-xl border p-4 " +
-                        (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
-                      }
-                    >
-                      <div className="text-sm font-medium">{item.title}</div>
-                      <div className={"mt-1 text-xs " + muted}>{item.text}</div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </Card>
-            </motion.div>
-
             <motion.div variants={reveal}>
-              <Card reduceMotion={!!reduceMotion} hoverLift className="p-6">
-                <div className="text-sm font-medium">{t.about.journeyTitle}</div>
-                <p className={"mt-2 text-sm leading-relaxed " + muted}>{t.about.journeyText}</p>
-                <div className="mt-5 grid gap-3">
-                  <div className={"flex items-center gap-2 text-sm " + muted}>
-                    <MapPin size={16} /> {profile.contact.location}
-                  </div>
-                  <div className={"flex items-center gap-2 text-sm " + muted}>
-                    <Mail size={16} /> {profile.contact.email}
-                  </div>
-                  <div className={"flex items-center gap-2 text-sm " + muted}>
-                    <Phone size={16} /> {profile.contact.phone}
-                  </div>
-                </div>
-              </Card>
+              <SectionTitle
+                title={t.about.title}
+                subtitle={t.about.subtitle}
+                subtitleClass={muted}
+              />
             </motion.div>
-          </div>
-        </motion.section>
+
+            {/* About pills */}
+            <motion.div
+              variants={reveal}
+              className="mt-6 mb-10 flex flex-wrap items-center justify-center gap-2"
+            >
+              {profile.focus.map((f) => (
+                <Pill tone={dark ? "dark" : "light"} hoverInvert key={f}>
+                  {f}
+                </Pill>
+              ))}
+            </motion.div>
+
+            {/* ✅ About cards: fərqli animasiyalar */}
+            <div className="grid lg:grid-cols-3 gap-6" style={{ perspective: 1200 }}>
+              {/* Left (big) - rotateX */}
+              <motion.div
+                variants={makeFlipX(!!reduceMotion, 0)}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.25 }}
+                className="lg:col-span-2"
+              >
+                <Card reduceMotion={!!reduceMotion} hoverLift className="p-6">
+                  <p className={"text-sm leading-relaxed " + muted}>{profile.about}</p>
+
+                  {/* ✅ mini cards içəridə də ardıcıl */}
+                  <motion.div
+                    variants={makeStagger(!!reduceMotion, 0.09)}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, amount: 0.35 }}
+                    className="mt-6 grid sm:grid-cols-2 gap-4"
+                  >
+                    {[
+                      { title: "Clean Code", text: t.about.cards.clean },
+                      { title: "Modern UI/UX", text: t.about.cards.ui },
+                      { title: "User-Centered", text: t.about.cards.user },
+                      { title: "Performance", text: t.about.cards.perf },
+                    ].map((item, idx) => (
+                      <motion.div
+                        key={item.title}
+                        variants={{
+                          hidden: reduceMotion
+                            ? { opacity: 1, y: 0 }
+                            : { opacity: 0, y: 14, rotateZ: -3 },
+                          show: reduceMotion
+                            ? { opacity: 1, y: 0, rotateZ: 0, transition: { duration: 0.01 } }
+                            : {
+                              opacity: 1,
+                              y: 0,
+                              rotateZ: 0,
+                              transition: {
+                                duration: 0.6,
+                                ease: [0.16, 1, 0.3, 1],
+                                delay: idx * 0.08,
+                              },
+                            },
+                        }}
+                        whileHover={!reduceMotion ? { y: -3 } : undefined}
+                        transition={{ duration: 0.18 }}
+                        className={
+                          "rounded-xl border p-4 " +
+                          (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
+                        }
+                      >
+                        <div className="text-sm font-medium">{item.title}</div>
+                        <div className={"mt-1 text-xs " + muted}>{item.text}</div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </Card>
+              </motion.div>
+
+              {/* Right - rotateY */}
+              <motion.div
+                variants={makeFlipY(!!reduceMotion, 0.12)}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.25 }}
+              >
+                <Card reduceMotion={!!reduceMotion} hoverLift className="p-6">
+                  <div className="text-sm font-medium">{t.about.journeyTitle}</div>
+                  <p className={"mt-2 text-sm leading-relaxed " + muted}>{t.about.journeyText}</p>
+                  <div className="mt-5 grid gap-3">
+                    <div className={"flex items-center gap-2 text-sm " + muted}>
+                      <MapPin size={16} /> {profile.contact.location}
+                    </div>
+                    <div className={"flex items-center gap-2 text-sm " + muted}>
+                      <Mail size={16} /> {profile.contact.email}
+                    </div>
+                    <div className={"flex items-center gap-2 text-sm " + muted}>
+                      <Phone size={16} /> {profile.contact.phone}
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            </div>
+          </motion.div>
+        </section>
 
         {/* SKILLS */}
-        <motion.section
-          id="skills"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.22 }}
-          className="py-20"
-        >
-          <motion.div variants={reveal}>
-            <SectionTitle title={t.skills.title} subtitle={t.skills.subtitle} subtitleClass={muted} />
-          </motion.div>
+        <section id="skills" className="py-20">
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.22 }}
+          >
+            <motion.div variants={reveal}>
+              <SectionTitle
+                title={t.skills.title}
+                subtitle={t.skills.subtitle}
+                subtitleClass={muted}
+              />
+            </motion.div>
 
-          <div className="grid lg:grid-cols-3 gap-6">
-            <motion.div variants={reveal} className="lg:col-span-2">
-              <Card className="p-6" reduceMotion={!!reduceMotion}>
-                <div className="text-sm font-medium mb-4">{t.skills.core}</div>
-                <div className="grid gap-4">
-                  {skills.map((s) => (
-                    <SkillRow
-                      key={s.name}
-                      name={s.name}
-                      level={s.level}
+            {/* ✅ Skills cards: soldan/sağdan fərqli */}
+            <div className="grid lg:grid-cols-3 gap-6">
+              <motion.div
+                variants={makeSlideTilt(!!reduceMotion, "left", 0)}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.25 }}
+                className="lg:col-span-2"
+              >
+                <Card className="p-6" reduceMotion={!!reduceMotion} hoverLift>
+                  <div className="text-sm font-medium mb-4">{t.skills.core}</div>
+                  <div className="grid gap-4">
+                    {skills.map((s) => (
+                      <SkillRow
+                        key={s.name}
+                        name={s.name}
+                        level={s.level}
+                        dark={dark}
+                        muted={muted}
+                        reduceMotion={!!reduceMotion}
+                      />
+                    ))}
+                  </div>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                variants={makeSlideTilt(!!reduceMotion, "right", 0.12)}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.25 }}
+              >
+                <Card className="p-6" reduceMotion={!!reduceMotion} hoverLift>
+                  <div className="text-sm font-medium mb-4">{t.skills.stack}</div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {techTags.map((tag) => (
+                      <Pill key={tag} tone={dark ? "dark" : "light"} hoverInvert>
+                        {tag}
+                      </Pill>
+                    ))}
+                  </div>
+
+                  {/* Tools I use */}
+                  <div className="mt-6">
+                    <div className="text-sm font-medium mt-4">{t.skills.tools}</div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {tools.map((tool) => (
+                        <Pill key={tool} tone={dark ? "dark" : "light"} hoverInvert>
+                          {tool}
+                        </Pill>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* ✅ Stats card (count up) */}
+            <motion.div variants={reveal} className="mt-6">
+              <Card className="p-5" reduceMotion={!!reduceMotion} hoverLift>
+                <div
+                  className={
+                    "rounded-2xl border p-5 text-center " +
+                    (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
+                  }
+                >
+                  <div className="grid grid-cols-3 gap-3">
+                    <StatItem
+                      type="junior"
+                      label={t.skills.stat1}
                       dark={dark}
                       muted={muted}
                       reduceMotion={!!reduceMotion}
                     />
-                  ))}
+                    <StatItem
+                      type="projects"
+                      label={t.skills.stat2}
+                      dark={dark}
+                      muted={muted}
+                      reduceMotion={!!reduceMotion}
+                    />
+                    <StatItem
+                      type="learning"
+                      label={t.skills.stat3}
+                      dark={dark}
+                      muted={muted}
+                      reduceMotion={!!reduceMotion}
+                    />
+                  </div>
                 </div>
               </Card>
             </motion.div>
-
-            <motion.div variants={reveal}>
-              <Card className="p-6" reduceMotion={!!reduceMotion}>
-                <div className="text-sm font-medium mb-4">{t.skills.stack}</div>
-
-                <div className="flex flex-wrap gap-2">
-                  {techTags.map((tag) => (
-                    <Pill key={tag} tone={dark ? "dark" : "light"} hoverInvert>
-                      {tag}
-                    </Pill>
-                  ))}
-                </div>
-
-                {/* Tools I use */}
-                <div className="mt-6">
-                  <div className="text-sm font-medium mt-4">
-                    {t.skills.tools}
-                  </div>
-
-
-                  <div className="flex flex-wrap gap-2">
-                    {tools.map((tool) => (
-                      <Pill
-                        key={tool}
-                        tone={dark ? "dark" : "light"}
-                        hoverInvert
-                      >
-                        {tool}
-                      </Pill>
-                    ))}
-                  </div>
-
-                </div>
-              </Card>
-            </motion.div>
-
-          </div>
-
-
-
-          {/* ✅ Stats card: iki kartın altına ayrıca */}
-          <motion.div variants={reveal} className="mt-6">
-            <Card className="p-5" reduceMotion={!!reduceMotion}>
-              <div
-                className={
-                  "rounded-2xl border p-5 text-center " +
-                  (dark ? "border-white/10 bg-black/30" : "border-black/10 bg-white")
-                }
-              >
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { big: "Junior", small: t.skills.stat1 },
-                    { big: "4+", small: t.skills.stat2 },
-                    { big: "100%", small: t.skills.stat3 },
-                  ].map((s) => (
-                    <motion.div
-                      key={s.big}
-                      whileHover={!reduceMotion ? { scale: 1.06 } : undefined}
-                      transition={{ duration: 0.18 }}
-                      className="cursor-default"
-                    >
-                      <div className="text-2xl font-semibold">{s.big}</div>
-                      <div className={"text-xs mt-1 " + muted}>{s.small}</div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </Card>
           </motion.div>
-        </motion.section>
+        </section>
 
         {/* PROJECTS */}
-        <motion.section
-          id="projects"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.22 }}
-          className="py-20"
-        >
-          <motion.div variants={reveal}>
-            <SectionTitle title={t.projects.title} subtitle={t.projects.subtitle} subtitleClass={muted} />
-          </motion.div>
+        <section id="projects" className="py-20">
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.22 }}
+          >
+            <motion.div variants={reveal}>
+              <SectionTitle
+                title={t.projects.title}
+                subtitle={t.projects.subtitle}
+                subtitleClass={muted}
+              />
+            </motion.div>
 
-          <motion.div variants={stagger} className="grid md:grid-cols-2 gap-6">
-            {projects.map((p) => (
-              <motion.div
-                key={p.title}
-                variants={reveal}
-                whileHover={reduceMotion ? undefined : { y: -4 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Card enableLayout={enableLayout} reduceMotion={!!reduceMotion} className="p-6 h-full">
-                  <motion.div layout="position" className="flex items-center justify-between gap-3">
-                    <motion.h3 layout="position" className="text-lg font-semibold tracking-tight">
-                      {p.title}
-                    </motion.h3>
+            {/* ✅ Projects: 4 kart ard-arda 3D flip */}
+            <div className="grid md:grid-cols-2 gap-6" style={{ perspective: 1400 }}>
+              {projects.map((p, idx) => (
+                <motion.div
+                  key={p.title}
+                  variants={makeFlipY(!!reduceMotion, idx * 0.12)}
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, amount: 0.25 }}
+                  style={{ transformStyle: "preserve-3d" }}
+                  whileHover={reduceMotion ? undefined : { y: -4 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Card
+                    enableLayout={enableLayout}
+                    reduceMotion={!!reduceMotion}
+                    className="p-6 h-full"
+                    hoverLift
+                  >
+                    <motion.div layout="position" className="flex items-center justify-between gap-3">
+                      <motion.h3 layout="position" className="text-lg font-semibold tracking-tight">
+                        {p.title}
+                      </motion.h3>
 
-                    {p.status ? (
-                      <motion.span
-                        layout="position"
-                        className={
-                          "text-[11px] rounded-full px-2.5 py-1 border " +
-                          (dark
-                            ? "border-white/10 bg-white/5 text-white/80"
-                            : "border-black/10 bg-black/5 text-black/70")
-                        }
-                      >
-                        {p.status}
-                      </motion.span>
-                    ) : null}
-                  </motion.div>
-
-                  <motion.p layout="position" className={"mt-2 text-sm leading-relaxed " + muted}>
-                    {p.description}
-                  </motion.p>
-
-                  {p.features?.length ? (
-                    <motion.div layout="position" className="mt-4">
-                      <div className={"text-[11px] uppercase tracking-[0.18em] " + muted}>
-                        {t.projects.features}
-                      </div>
-                      <ul className={"mt-2 text-sm " + muted}>
-                        {p.features.slice(0, 3).map((f) => (
-                          <li key={f} className="flex items-start gap-2">
-                            <span className={dark ? "text-white/60" : "text-black/50"}>•</span>
-                            <span>{f}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      {p.status ? (
+                        <motion.span
+                          layout="position"
+                          className={
+                            "text-[11px] rounded-full px-2.5 py-1 border " +
+                            (dark
+                              ? "border-white/10 bg-white/5 text-white/80"
+                              : "border-black/10 bg-black/5 text-black/70")
+                          }
+                        >
+                          {p.status}
+                        </motion.span>
+                      ) : null}
                     </motion.div>
-                  ) : null}
 
-                  {/* ✅ Project tech pills: hover invert */}
-                  <motion.div layout="position" className="mt-4 flex flex-wrap gap-2">
-                    {p.tech.map((tech) => (
-                      <Pill
-                        tone={dark ? "dark" : "light"}
-                        hoverInvert
-                        key={tech}
-                      >
-                        {tech}
-                      </Pill>
-                    ))}
-                  </motion.div>
+                    <motion.p layout="position" className={"mt-2 text-sm leading-relaxed " + muted}>
+                      {p.description}
+                    </motion.p>
 
-                  <motion.div layout="position" className="mt-6">
-                    {p.link ? (
-                      <Button
-                        href={p.link}
-                        variant="outline"
-                        tone={dark ? "dark" : "light"}
-                        hoverLift
-                        reduceMotion={!!reduceMotion}
-                      >
-                        <Github size={16} /> {t.projects.viewGithub}
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        tone={dark ? "dark" : "light"}
-                        onClick={() => scrollTo("contact")}
-                        hoverLift
-                        reduceMotion={!!reduceMotion}
-                      >
-                        <Mail size={16} /> {t.projects.askDetails}
-                      </Button>
-                    )}
-                  </motion.div>
-                </Card>
-              </motion.div>
-            ))}
+                    {p.features?.length ? (
+                      <motion.div layout="position" className="mt-4">
+                        <div className={"text-[11px] uppercase tracking-[0.18em] " + muted}>
+                          {t.projects.features}
+                        </div>
+                        <ul className={"mt-2 text-sm " + muted}>
+                          {p.features.slice(0, 3).map((f) => (
+                            <li key={f} className="flex items-start gap-2">
+                              <span className={dark ? "text-white/60" : "text-black/50"}>•</span>
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    ) : null}
+
+                    <motion.div layout="position" className="mt-4 flex flex-wrap gap-2">
+                      {p.tech.map((tech) => (
+                        <Pill tone={dark ? "dark" : "light"} hoverInvert key={tech}>
+                          {tech}
+                        </Pill>
+                      ))}
+                    </motion.div>
+
+                    <motion.div layout="position" className="mt-6">
+                      {p.link ? (
+                        <Button
+                          href={p.link}
+                          variant="outline"
+                          tone={dark ? "dark" : "light"}
+                          hoverLift
+                          reduceMotion={!!reduceMotion}
+                        >
+                          <Github size={16} /> {t.projects.viewGithub}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          tone={dark ? "dark" : "light"}
+                          onClick={() => scrollTo("contact")}
+                          hoverLift
+                          reduceMotion={!!reduceMotion}
+                        >
+                          <Mail size={16} /> {t.projects.askDetails}
+                        </Button>
+                      )}
+                    </motion.div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
-        </motion.section>
+        </section>
 
         {/* CONTACT */}
-        <motion.section
-          id="contact"
-          variants={stagger}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.22 }}
-          className="py-20"
-        >
-          <motion.div variants={reveal}>
-            <SectionTitle title={t.contact.title} subtitle={t.contact.subtitle} subtitleClass={muted} />
-          </motion.div>
-
-          <div className="grid lg:grid-cols-2 gap-6">
+        <section id="contact" className="py-20">
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.22 }}
+          >
             <motion.div variants={reveal}>
-              <Card className="p-6" reduceMotion={!!reduceMotion} hoverLift>
-                <div className="text-sm font-medium">{t.contact.getInTouch}</div>
+              <SectionTitle
+                title={t.contact.title}
+                subtitle={t.contact.subtitle}
+                subtitleClass={muted}
+              />
+            </motion.div>
 
-                <div className="mt-5 grid gap-3">
-                  {[
-                    {
-                      label: profile.contact.email,
-                      href: `mailto:${profile.contact.email}`,
-                      icon: <Mail size={16} />,
-                    },
-                    {
-                      label: "GitHub",
-                      href: profile.contact.github,
-                      icon: <Github size={16} />,
-                      external: true,
-                    },
-                    {
-                      label: "LinkedIn",
-                      href: profile.contact.linkedin,
-                      icon: <Linkedin size={16} />,
-                      external: true,
-                    },
-                  ].map((item, index) => (
-                    <a
-                      key={item.label}
-                      href={item.href}
-                      target={item.external ? "_blank" : undefined}
-                      rel={item.external ? "noreferrer" : undefined}
-                      className={
-                        "flex items-center justify-between rounded-xl border p-4 transition " +
-                        (dark
-                          ? "border-white/10 bg-black/30 hover:bg-white/5"
-                          : "border-black/10 bg-white hover:bg-black/5")
+            {/* ✅ Contact 2 kart: fərqli animasiyalar */}
+            <div className="grid lg:grid-cols-2 gap-6" style={{ perspective: 1200 }}>
+              {/* left - slide tilt */}
+              <motion.div
+                variants={makeSlideTilt(!!reduceMotion, "left", 0)}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.25 }}
+              >
+                <Card className="p-6" reduceMotion={!!reduceMotion} hoverLift>
+                  <div className="text-sm font-medium">{t.contact.getInTouch}</div>
+
+                  <div className="mt-5 grid gap-3">
+                    {[
+                      {
+                        label: profile.contact.email,
+                        href: `mailto:${profile.contact.email}`,
+                        icon: <Mail size={16} />,
+                      },
+                      {
+                        label: "GitHub",
+                        href: profile.contact.github,
+                        icon: <Github size={16} />,
+                        external: true,
+                      },
+                      {
+                        label: "LinkedIn",
+                        href: profile.contact.linkedin,
+                        icon: <Linkedin size={16} />,
+                        external: true,
+                      },
+                    ].map((item, index) => (
+                      <a
+                        key={item.label}
+                        href={item.href}
+                        target={item.external ? "_blank" : undefined}
+                        rel={item.external ? "noreferrer" : undefined}
+                        className={
+                          "flex items-center justify-between rounded-xl border p-4 transition " +
+                          (dark
+                            ? "border-white/10 bg-black/30 hover:bg-white/5"
+                            : "border-black/10 bg-white hover:bg-black/5")
+                        }
+                      >
+                        <span className={"flex items-center gap-2 text-sm " + muted}>
+                          {item.icon} {item.label}
+                        </span>
+
+                        <motion.span
+                          className={muted}
+                          animate={reduceMotion ? { x: 0 } : { x: [0, 6, 0] }}
+                          transition={
+                            reduceMotion
+                              ? { duration: 0.01 }
+                              : {
+                                duration: 0.9,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                                delay: index * 0.12,
+                              }
+                          }
+                        >
+                          <ArrowRight size={16} />
+                        </motion.span>
+                      </a>
+                    ))}
+                  </div>
+
+                  <div className={"mt-6 text-xs " + muted}>
+                    {t.contact.phoneLabel}: {profile.contact.phone}
+                  </div>
+                </Card>
+              </motion.div>
+
+              {/* right - flipX */}
+              <motion.div
+                variants={makeFlipX(!!reduceMotion, 0.12)}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.25 }}
+              >
+                <Card className="p-6" reduceMotion={!!reduceMotion} hoverLift>
+                  <div className="text-sm font-medium">{t.contact.sendMsg}</div>
+
+                  <form
+                    className="mt-5 grid gap-3"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      setSent(false);
+
+                      const eMap = validateForm();
+                      if (Object.keys(eMap).length) {
+                        setErrors(eMap);
+                        return;
                       }
-                    >
-                      <span className={"flex items-center gap-2 text-sm " + muted}>
-                        {item.icon} {item.label}
-                      </span>
 
-                      {/* ➜ Ardıcıl ox animasiyası */}
+                      setErrors({});
+                      setSending(true);
+
+                      try {
+                        const res = await fetch("/api/contact", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            name: form.name.trim(),
+                            email: form.email.trim(),
+                            message: form.message.trim(),
+                          }),
+                        });
+
+                        const data = await res.json().catch(() => ({}));
+
+                        if (!res.ok) {
+                          setErrors({
+                            server:
+                              (data?.error as string) ||
+                              (lang === "en"
+                                ? "Failed to send. Try again."
+                                : "Göndərilmədi. Yenidən yoxla."),
+                          });
+                          return;
+                        }
+
+                        setSent(true);
+                        setForm({ name: "", email: "", message: "" });
+                      } catch {
+                        setErrors({
+                          server:
+                            lang === "en"
+                              ? "Network error. Try again."
+                              : "Şəbəkə xətası. Yenidən yoxla.",
+                        });
+                      } finally {
+                        setSending(false);
+                      }
+                    }}
+                  >
+                    <div>
+                      <input
+                        value={form.name}
+                        onChange={(e) => {
+                          setForm((p) => ({ ...p, name: e.target.value }));
+                          setErrors((p) => ({ ...p, name: undefined, server: undefined }));
+                          setSent(false);
+                        }}
+                        className={
+                          "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
+                          (errors.name
+                            ? "border-red-500/70 focus:border-red-500"
+                            : dark
+                              ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
+                              : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
+                        }
+                        placeholder={t.contact.form.name}
+                      />
+                      {errors.name ? (
+                        <div className="mt-1 text-[11px] text-red-400">{errors.name}</div>
+                      ) : null}
+                    </div>
+
+                    <div>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => {
+                          setForm((p) => ({ ...p, email: e.target.value }));
+                          setErrors((p) => ({ ...p, email: undefined, server: undefined }));
+                          setSent(false);
+                        }}
+                        className={
+                          "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
+                          (errors.email
+                            ? "border-red-500/70 focus:border-red-500"
+                            : dark
+                              ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
+                              : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
+                        }
+                        placeholder={t.contact.form.email}
+                      />
+                      {errors.email ? (
+                        <div className="mt-1 text-[11px] text-red-400">{errors.email}</div>
+                      ) : null}
+                    </div>
+
+                    <div>
+                      <textarea
+                        rowsrow
+                        rows={4}
+                        value={form.message}
+                        onChange={(e) => {
+                          setForm((p) => ({ ...p, message: e.target.value }));
+                          setErrors((p) => ({ ...p, message: undefined, server: undefined }));
+                          setSent(false);
+                        }}
+                        className={
+                          "w-full rounded-xl border px-4 py-3 text-sm outline-none transition resize-none " +
+                          (errors.message
+                            ? "border-red-500/70 focus:border-red-500"
+                            : dark
+                              ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
+                              : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
+                        }
+                        placeholder={t.contact.form.message}
+                      />
+                      {errors.message ? (
+                        <div className="mt-1 text-[11px] text-red-400">{errors.message}</div>
+                      ) : null}
+                    </div>
+
+                    {errors.server ? (
+                      <div
+                        className={
+                          "rounded-xl border px-4 py-3 text-sm " +
+                          (dark
+                            ? "border-red-500/20 bg-red-500/10 text-red-200"
+                            : "border-red-500/30 bg-red-50 text-red-700")
+                        }
+                      >
+                        {errors.server}
+                      </div>
+                    ) : null}
+
+                    {sent ? (
+                      <div
+                        className={
+                          "rounded-xl border px-4 py-3 text-sm " +
+                          (dark
+                            ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200"
+                            : "border-emerald-500/30 bg-emerald-50 text-emerald-700")
+                        }
+                      >
+                        {lang === "en" ? "Message sent successfully." : "Mesaj uğurla göndərildi."}
+                      </div>
+                    ) : null}
+
+                    <Button
+                      variant="primary"
+                      tone={dark ? "dark" : "light"}
+                      className={"justify-center " + (sending ? "opacity-80 pointer-events-none" : "")}
+                      hoverLift
+                      reduceMotion={!!reduceMotion}
+                    >
+                      {sending ? (lang === "en" ? "Sending..." : "Göndərilir...") : t.contact.form.send}
                       <motion.span
-                        className={muted}
+                        className="ml-2 inline-flex"
                         animate={reduceMotion ? { x: 0 } : { x: [0, 6, 0] }}
                         transition={
                           reduceMotion
                             ? { duration: 0.01 }
-                            : {
-                              duration: 0.9,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                              delay: index * 0.12, // ✅ 0s / 0.12s / 0.24s
-                            }
+                            : { duration: 0.9, repeat: Infinity, ease: "easeInOut", delay: 0.36 }
                         }
                       >
                         <ArrowRight size={16} />
                       </motion.span>
-                    </a>
-                  ))}
+                    </Button>
 
-
-                </div>
-
-                <div className={"mt-6 text-xs " + muted}>
-                  {t.contact.phoneLabel}: {profile.contact.phone}
-                </div>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={reveal}>
-              <Card className="p-6" reduceMotion={!!reduceMotion} hoverLift>
-                <div className="text-sm font-medium">{t.contact.sendMsg}</div>
-
-                <form
-                  className="mt-5 grid gap-3"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    setSent(false);
-
-                    const eMap = validateForm();
-                    if (Object.keys(eMap).length) {
-                      setErrors(eMap);
-                      return;
-                    }
-
-                    setErrors({});
-                    setSending(true);
-
-                    try {
-                      const res = await fetch("/api/contact", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          name: form.name.trim(),
-                          email: form.email.trim(),
-                          message: form.message.trim(),
-                        }),
-                      });
-
-                      const data = await res.json().catch(() => ({}));
-
-                      if (!res.ok) {
-                        setErrors({
-                          server:
-                            (data?.error as string) ||
-                            (lang === "en"
-                              ? "Failed to send. Try again."
-                              : "Göndərilmədi. Yenidən yoxla."),
-                        });
-                        return;
-                      }
-
-                      // ✅ success
-                      setSent(true);
-                      setForm({ name: "", email: "", message: "" });
-                    } catch {
-                      setErrors({
-                        server: lang === "en" ? "Network error. Try again." : "Şəbəkə xətası. Yenidən yoxla.",
-                      });
-                    } finally {
-                      setSending(false);
-                    }
-                  }}
-                >
-                  <div>
-                    <input
-                      value={form.name}
-                      onChange={(e) => {
-                        setForm((p) => ({ ...p, name: e.target.value }));
-                        setErrors((p) => ({ ...p, name: undefined, server: undefined }));
-                        setSent(false);
-                      }}
-                      className={
-                        "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
-                        (errors.name
-                          ? "border-red-500/70 focus:border-red-500"
-                          : dark
-                            ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
-                            : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
-                      }
-                      placeholder={t.contact.form.name}
-                    />
-                    {errors.name ? (
-                      <div className="mt-1 text-[11px] text-red-400">{errors.name}</div>
-                    ) : null}
-                  </div>
-
-                  <div>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => {
-                        setForm((p) => ({ ...p, email: e.target.value }));
-                        setErrors((p) => ({ ...p, email: undefined, server: undefined }));
-                        setSent(false);
-                      }}
-                      className={
-                        "w-full rounded-xl border px-4 py-3 text-sm outline-none transition " +
-                        (errors.email
-                          ? "border-red-500/70 focus:border-red-500"
-                          : dark
-                            ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
-                            : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
-                      }
-                      placeholder={t.contact.form.email}
-                    />
-                    {errors.email ? (
-                      <div className="mt-1 text-[11px] text-red-400">{errors.email}</div>
-                    ) : null}
-                  </div>
-
-                  <div>
-                    <textarea
-                      rows={4}
-                      value={form.message}
-                      onChange={(e) => {
-                        setForm((p) => ({ ...p, message: e.target.value }));
-                        setErrors((p) => ({ ...p, message: undefined, server: undefined }));
-                        setSent(false);
-                      }}
-                      className={
-                        "w-full rounded-xl border px-4 py-3 text-sm outline-none transition resize-none " +
-                        (errors.message
-                          ? "border-red-500/70 focus:border-red-500"
-                          : dark
-                            ? "border-white/10 bg-black/30 placeholder:text-white/30 focus:border-white/25"
-                            : "border-black/10 bg-white placeholder:text-black/30 focus:border-black/25")
-                      }
-                      placeholder={t.contact.form.message}
-                    />
-                    {errors.message ? (
-                      <div className="mt-1 text-[11px] text-red-400">{errors.message}</div>
-                    ) : null}
-                  </div>
-
-                  {/* server error / success */}
-                  {errors.server ? (
-                    <div
-                      className={
-                        "rounded-xl border px-4 py-3 text-sm " +
-                        (dark ? "border-red-500/20 bg-red-500/10 text-red-200" : "border-red-500/30 bg-red-50 text-red-700")
-                      }
-                    >
-                      {errors.server}
-                    </div>
-                  ) : null}
-
-                  {sent ? (
-                    <div
-                      className={
-                        "rounded-xl border px-4 py-3 text-sm " +
-                        (dark ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200" : "border-emerald-500/30 bg-emerald-50 text-emerald-700")
-                      }
-                    >
-                      {lang === "en" ? "Message sent successfully." : "Mesaj uğurla göndərildi."}
-                    </div>
-                  ) : null}
-
-                  <Button
-                    variant="primary"
-                    tone={dark ? "dark" : "light"}
-                    className={"justify-center " + (sending ? "opacity-80 pointer-events-none" : "")}
-                    hoverLift
-                    reduceMotion={!!reduceMotion}
-                  >
-                    {sending ? (lang === "en" ? "Sending..." : "Göndərilir...") : t.contact.form.send}
-                    <motion.span
-                      className="ml-2 inline-flex"
-                      animate={reduceMotion ? { x: 0 } : { x: [0, 6, 0] }}
-                      transition={
-                        reduceMotion
-                          ? { duration: 0.01 }
-                          : { duration: 0.9, repeat: Infinity, ease: "easeInOut", delay: 0.36 }
-                      }
-                    >
-                      <ArrowRight size={16} />
-                    </motion.span>
-                  </Button>
-
-                  <p className={"text-[11px] leading-relaxed " + muted}>
-                    {t.contact.form.note}
-                  </p>
-                </form>
-              </Card>
-            </motion.div>
-          </div>
-        </motion.section>
+                    <p className={"text-[11px] leading-relaxed " + muted}>
+                      {t.contact.form.note}
+                    </p>
+                  </form>
+                </Card>
+              </motion.div>
+            </div>
+          </motion.div>
+        </section>
 
         {/* Footer */}
         <footer className={"pt-10 text-center text-xs " + muted}>
