@@ -120,7 +120,7 @@ const Card = ({
     // Background: light modda card ağ olsun (body ilə birləşməsin)
     (dark ? "bg-white/5 " : "bg-white ") +
     // ✅ iOS/Safari scroll-da "blur overlay" problemi: mobilde backdrop-filter NONE
-    "backdrop-blur-none max-md:backdrop-blur-0 " +
+    "backdrop-blur-none md:backdrop-blur-md " +
     // Mobile fix (dark-da da görünəcək qədər açıq)
     (dark ? "max-md:bg-white/5 " : "max-md:bg-white ") +
     // Shadow: soft (mobil-də də qalır)
@@ -720,7 +720,7 @@ export default function Portfolio() {
   return (
     <div className={`min-h-screen ${bg}`}>
       {/* Ambient */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden max-md:hidden">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden max-md:opacity-20">
         <div
           className={
             "absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full blur-3xl opacity-30 " +
