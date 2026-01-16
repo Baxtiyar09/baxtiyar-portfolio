@@ -977,10 +977,15 @@ export default function Portfolio() {
               </motion.div>
             </div>
 
-            {/* ✅ Stats: wrapper hover YOX, border YOX, yalnız item hover */}
+            {/* ✅ Stats card: dizayn əvvəlki kimi, hover yalnız text/item-ə */}
             <motion.div variants={reveal} className="mt-6">
-              <Card tone={dark ? "dark" : "light"} className="p-5" reduceMotion={!!reduceMotion} hoverLift={false}>
-                <div className={"rounded-2xl p-5 text-center " + (dark ? "bg-black/30" : "bg-white")}>
+              <Card className="p-5" reduceMotion={!!reduceMotion} hoverLift={false} tone={dark ? "dark" : "light"}>
+                <div
+                  className={
+                    "rounded-2xl p-5 text-center " +
+                    (dark ? "bg-black/30" : "bg-white")
+                  }
+                >
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       { type: "junior" as const, label: t.skills.stat1 },
@@ -989,16 +994,16 @@ export default function Portfolio() {
                     ].map((s, idx) => (
                       <motion.div
                         key={s.type}
+                        className="cursor-default"
                         whileHover={
                           reduceMotion
                             ? undefined
                             : {
-                              scale: 1.05,
-                              boxShadow: dark ? "0 14px 44px rgba(255,255,255,0.10)" : "0 14px 44px rgba(0,0,0,0.12)",
+                              scale: 1.06,
+                              filter: "drop-shadow(0 14px 28px rgba(255,255,255,0.10))",
                             }
                         }
                         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        className={"rounded-2xl p-4 " + (dark ? "bg-white/5" : "bg-black/[0.04]")}
                       >
                         <div className="text-2xl font-semibold">
                           {s.type === "junior" ? (
