@@ -227,7 +227,11 @@ function useActiveSection(ids: string[]) {
           .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0));
         if (visible[0]?.target?.id) setActive(visible[0].target.id);
       },
-      { root: null, threshold: [0.2, 0.35, 0.5], rootMargin: "-20% 0px -60% 0px" }
+      {
+        root: null,
+        threshold: [0.12, 0.2, 0.3],
+        rootMargin: "-30% 0px -45% 0px",
+      }
     );
 
     els.forEach((el) => io.observe(el));
@@ -888,13 +892,13 @@ export default function Portfolio() {
                     reduceMotion
                       ? undefined
                       : {
-                          rotate: { duration: 0.18 },
-                          y: {
-                            duration: 1.2,
-                            repeat: cvOpen ? 0 : Infinity,
-                            ease: [0.4, 0, 0.2, 1],
-                          },
-                        }
+                        rotate: { duration: 0.18 },
+                        y: {
+                          duration: 1.2,
+                          repeat: cvOpen ? 0 : Infinity,
+                          ease: [0.4, 0, 0.2, 1],
+                        },
+                      }
                   }
                   className="inline-flex"
                 >
